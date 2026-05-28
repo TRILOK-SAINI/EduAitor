@@ -1,0 +1,1 @@
+School SAAS ERP project which includes admin frontend and backend, based on MERN stack.
