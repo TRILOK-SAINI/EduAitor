@@ -132,6 +132,7 @@ const SchoolDashboard = () => {
         defaultersRes,
         booksRes,
         issuesRes,
+        busesRes,
       ] = await Promise.all([
         axios.get(`${API}/students`, { withCredentials: true }),
         axios.get(`${API}/teachers`, { withCredentials: true }),
@@ -151,9 +152,11 @@ const SchoolDashboard = () => {
           params: { status: "active" },
           withCredentials: true,
         }),
+         axios.get(`${API}/transport/buses`, { withCredentials: true }),
       ]);
 
-      console.log("Dashboard data:", { students: studentsRes.data, teachers: teachersRes.data, classes: classesRes.data, notices: noticesRes.data, events: eventsRes.data, fees: feesRes.data, defaulters: defaultersRes.data, books: booksRes.data, issues: issuesRes.data }); 
+      console.log(busesRes.data.data)
+      console.log("Dashboard data:", { buses : busesRes.data ,students: studentsRes.data, teachers: teachersRes.data, classes: classesRes.data, notices: noticesRes.data, events: eventsRes.data, fees: feesRes.data, defaulters: defaultersRes.data, books: booksRes.data, issues: issuesRes.data }); 
       setDashboard({
         students: studentsRes.data.data || [],
         teachers: teachersRes.data.data || [],
@@ -182,6 +185,7 @@ const SchoolDashboard = () => {
           returned: 0,
           pendingFine: 0,
         },
+        buses:busesRes.data.data,
       });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load dashboard");
@@ -292,10 +296,10 @@ const SchoolDashboard = () => {
       tone: "blue",
     },
     {
-      title: "Library Circulation",
-      value: dashboard.issueStats.totalIssued,
-      helper: `${dashboard.issueStats.overdue || 0} overdue issues`,
-      icon: <FaBookOpen />,
+      title: "Total Buses",
+      value: `${dashboard.buses?.length}`,
+     helper: `Total Active: ${dashboard.buses?.filter(b => b.status === "Active").length || 0} | On Maintenance : ${dashboard.buses?.filter(b => b.status === "Maintenance").length || 0} `,
+      icon: <FaChessBoard />,
       tone: "amber",
     },
   ];
@@ -341,13 +345,13 @@ const SchoolDashboard = () => {
       tone: "emerald",
       icon: <FaChessBoard />,
     },
-    {
-      title: "Class Readiness",
-      value: `${metrics.classesReadyRate}%`,
-      helper: "Sections with assigned teachers",
-      tone: "amber",
-      icon: <FaCalendarCheck />,
-    },
+    // {
+    //   title: "Class Readiness",
+    //   value: `${metrics.classesReadyRate}%`,
+    //   helper: "Sections with assigned teachers",
+    //   tone: "amber",
+    //   icon: <FaCalendarCheck />,
+    // },
   ];
 
   const quickActions = [
@@ -480,6 +484,7 @@ const SchoolDashboard = () => {
             note={`${metrics.totalClasses} classes and ${metrics.totalSections} sections`}
             icon={<FaUserGraduate />}
             tone="blue"
+            path="/school/students"
           />
           <StatCard
             title="Teachers"
@@ -487,6 +492,7 @@ const SchoolDashboard = () => {
             note={`${metrics.teachersPresent} marked present today`}
             icon={<FaChessBoard />}
             tone="emerald"
+              path="/school/teachers"
           />
           <StatCard
             title="Fee Collected"
@@ -494,18 +500,118 @@ const SchoolDashboard = () => {
             note={`${dashboard.defaulters.length} defaulters need follow-up`}
             icon={<FaFileInvoiceDollar />}
             tone="amber"
+              path="/school/fee-history"
           />
           <StatCard
-            title="Operational Score"
-            value={`${Math.round((metrics.classesReadyRate + metrics.teacherAttendanceRate + metrics.studentAttendanceRate) / 3)}%`}
-            note="Combined readiness and attendance view"
+            title="School capacity"
+            value={`${metrics.totalCapacity > 0
+          ? `${metrics.enrolledStudents}/${metrics.totalCapacity}`
+          : metrics.enrolledStudents}`}
+            note={`${metrics.totalClasses} classes in operation`}
             icon={<FaArrowTrendUp />}
             tone="violet"
+            path="/school/class"
           />
         </section>
 
+            {/* Reports Overview */}
+        {visibility.reports && (
+          <SectionCard
+            title="Reports Overview"
+            subtitle="Cross-functional summary across finance, academics, and library operations"
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {reportCards.map((card) => (
+                <ReportCard key={card.title} {...card} />
+              ))}
+            </div>
+          </SectionCard>
+        )}
+
+         {/* Quick Actions + Operational Highlights */}
+        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          {visibility.quickActions && (
+            <SectionCard
+              title="Quick Actions"
+              subtitle="Fast entry points for the tasks a school admin handles every day"
+            >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {quickActions.map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => navigate(item.to)}
+                    className="group rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] p-4 text-left transition hover:-translate-y-0.5 hover:border-[rgb(var(--border-strong))] hover:shadow-md"
+                  >
+                    <div
+                      className={`mb-4 inline-flex rounded-2xl p-3 text-lg ${quickActionTone[item.tone]}`}
+                    >
+                      {item.icon}
+                    </div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-black text-[rgb(var(--text))]">
+                          {item.label}
+                        </h3>
+                        <p className="mt-1 text-sm text-[rgb(var(--text-muted))]">
+                          {item.helper}
+                        </p>
+                      </div>
+                      <FiArrowRight className="mt-1 text-[rgb(var(--text-muted))] transition group-hover:text-[rgb(var(--text))]" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+
+          <SectionCard
+            title="Operational Highlights"
+            subtitle="Active communication and school calendar priorities"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              {visibility.notices && (
+                <MiniPanel
+                  title="Latest Notices"
+                  tone="blue"
+                  actionLabel="Open Notices"
+                  onAction={() => navigate("/school/notice")}
+                  emptyMessage="No notices published yet."
+                >
+                  {latestNotices.map((notice) => (
+                    <TimelineRow
+                      key={notice._id}
+                      title={notice.title}
+                      meta={`${notice.audience || "All"} | ${notice.priority || "Normal"}`}
+                      date={formatShortDate(notice.publishDate)}
+                    />
+                  ))}
+                </MiniPanel>
+              )}
+              {visibility.events && (
+                <MiniPanel
+                  title="Upcoming Events"
+                  tone="amber"
+                  actionLabel="Open Events"
+                  onAction={() => navigate("/school/event")}
+                  emptyMessage="No upcoming events on the calendar."
+                >
+                  {upcomingEvents.map((event) => (
+                    <TimelineRow
+                      key={event._id}
+                      title={event.title}
+                      meta={`${event.location || "Campus"} | ${event.time || "Time pending"}`}
+                      date={formatShortDate(event.startDate)}
+                    />
+                  ))}
+                </MiniPanel>
+              )}
+            </div>
+          </SectionCard>
+        </div>
+
+                {/* added hidden in command center  */}
         {/* Command Center + Priority Focus */}
-        <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+        <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr] hidden"> {/* <= here  */}
 
           {/* Command Center */}
           <div className="overflow-hidden rounded-3xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] p-6 text-[rgb(var(--text))] shadow-sm">
@@ -573,20 +679,7 @@ const SchoolDashboard = () => {
           </div>
         </section>
 
-        {/* Reports Overview */}
-        {visibility.reports && (
-          <SectionCard
-            title="Reports Overview"
-            subtitle="Cross-functional summary across finance, academics, and library operations"
-          >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {reportCards.map((card) => (
-                <ReportCard key={card.title} {...card} />
-              ))}
-            </div>
-          </SectionCard>
-        )}
-
+      
         {/* Fee Trend + Attendance */}
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           {visibility.feeTrends && (
@@ -674,86 +767,7 @@ const SchoolDashboard = () => {
           )}
         </div>
 
-        {/* Quick Actions + Operational Highlights */}
-        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-          {visibility.quickActions && (
-            <SectionCard
-              title="Quick Actions"
-              subtitle="Fast entry points for the tasks a school admin handles every day"
-            >
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {quickActions.map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => navigate(item.to)}
-                    className="group rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--bg))] p-4 text-left transition hover:-translate-y-0.5 hover:border-[rgb(var(--border-strong))] hover:shadow-md"
-                  >
-                    <div
-                      className={`mb-4 inline-flex rounded-2xl p-3 text-lg ${quickActionTone[item.tone]}`}
-                    >
-                      {item.icon}
-                    </div>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-base font-black text-[rgb(var(--text))]">
-                          {item.label}
-                        </h3>
-                        <p className="mt-1 text-sm text-[rgb(var(--text-muted))]">
-                          {item.helper}
-                        </p>
-                      </div>
-                      <FiArrowRight className="mt-1 text-[rgb(var(--text-muted))] transition group-hover:text-[rgb(var(--text))]" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </SectionCard>
-          )}
-
-          <SectionCard
-            title="Operational Highlights"
-            subtitle="Active communication and school calendar priorities"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              {visibility.notices && (
-                <MiniPanel
-                  title="Latest Notices"
-                  tone="blue"
-                  actionLabel="Open Notices"
-                  onAction={() => navigate("/school/notice")}
-                  emptyMessage="No notices published yet."
-                >
-                  {latestNotices.map((notice) => (
-                    <TimelineRow
-                      key={notice._id}
-                      title={notice.title}
-                      meta={`${notice.audience || "All"} | ${notice.priority || "Normal"}`}
-                      date={formatShortDate(notice.publishDate)}
-                    />
-                  ))}
-                </MiniPanel>
-              )}
-              {visibility.events && (
-                <MiniPanel
-                  title="Upcoming Events"
-                  tone="amber"
-                  actionLabel="Open Events"
-                  onAction={() => navigate("/school/event")}
-                  emptyMessage="No upcoming events on the calendar."
-                >
-                  {upcomingEvents.map((event) => (
-                    <TimelineRow
-                      key={event._id}
-                      title={event.title}
-                      meta={`${event.location || "Campus"} | ${event.time || "Time pending"}`}
-                      date={formatShortDate(event.startDate)}
-                    />
-                  ))}
-                </MiniPanel>
-              )}
-            </div>
-          </SectionCard>
-        </div>
+       
       </div>
     </div>
   );
@@ -828,7 +842,8 @@ const SectionCard = ({ title, subtitle, children }) => (
   </section>
 );
 
-const StatCard = ({ title, value, note, icon, tone }) => {
+const StatCard = ({ title, value, note, icon, tone ,path}) => {
+  const navigate = useNavigate();
   const tones = {
     blue:   "bg-blue-50 text-blue-600",
     emerald:"bg-emerald-50 text-emerald-600",
@@ -836,7 +851,7 @@ const StatCard = ({ title, value, note, icon, tone }) => {
     violet: "bg-violet-50 text-violet-600",
   };
   return (
-    <div className="rounded-3xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] p-5 shadow-sm">
+    <div className="rounded-3xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] p-5 shadow-sm cursor-pointer" onClick={()=> navigate(path)}  >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-[rgb(var(--text-muted))]">
@@ -958,7 +973,7 @@ const MiniPanel = ({ title, tone, actionLabel, onAction, children, emptyMessage 
         </div>
         <button
           onClick={onAction}
-          className="text-xs font-bold text-[rgb(var(--text-muted))] transition hover:text-[rgb(var(--text))]"
+          className="text-xs font-bold text-[rgb(var(--primary))] underline transition hover:text-[rgb(var(--text))] cursor-pointer"
         >
           {actionLabel}
         </button>

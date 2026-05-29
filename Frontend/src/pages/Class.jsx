@@ -560,7 +560,8 @@ export default function ClassPage() {
                         onChange={(e) =>
                           setForm((p) => ({ ...p, status: e.target.value }))
                         }
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none
+                         focus:border-indigo-400 bg-[rgb(var(--surface))]"
                       >
                         <option>Active</option>
                         <option>Inactive</option>
@@ -601,7 +602,7 @@ export default function ClassPage() {
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-medium text-[rgb(var(--text))] mb-1">
+                            <label className="block text-xs font-medium text-[rgb(var(--text))]  mb-1">
                               Section{" "}
                               <span className="text-[rgb(var(--text-muted))] font-normal ml-1">
                                 (optional)
@@ -612,7 +613,8 @@ export default function ClassPage() {
                               onChange={(e) =>
                                 updateDetail(index, "sectionId", e.target.value)
                               }
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none
+                               focus:border-indigo-400 bg-[rgb(var(--surface))]"
                             >
                               <option value="">No Section</option>
                               {sections
@@ -738,7 +740,7 @@ export default function ClassPage() {
                                 >
                                   <option value="">Assign Teacher</option>
                                   {teachers.map((t) => (
-                                    <option key={t._id} value={t._id}>
+                                    <option key={t._id} value={t._id} className="bg-[rgb(var(--surface))]">
                                       {t.fullName}
                                     </option>
                                   ))}

@@ -48,6 +48,7 @@ const TeacherManagement = () => {
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState({});
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -120,44 +121,59 @@ const TeacherManagement = () => {
 
   /* FORM CHANGE */
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+const handleChange = (e) => {
+  const { name, value } = e.target;
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  setForm((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+
+  if (errors[name]) {
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  }
+};
+
+    /* FILE */
+
+ const handleFileChange = (e) => {
+  const { name, files } = e.target;
+  const file = files[0];
+
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error("File must be less than 2MB");
+    return;
+  }
+
+  if (errors[name]) {
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  }
+
+  setForm((prev) => ({
+    ...prev,
+    [name]: file,
+  }));
+};
+
 
   /* MULTI SELECT FOR CLASSES */
-
-  const handleClassChange = (e) => {
+ const handleClassChange = (e) => {
     const options = Array.from(e.target.selectedOptions);
     const values = options.map((opt) => opt.value);
 
     setForm((prev) => ({
       ...prev,
       assignedClasses: values,
-    }));
-  };
-
-  /* FILE */
-
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-
-    const file = files[0];
-
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("File must be less than 2MB");
-      return;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: file,
     }));
   };
 
@@ -201,16 +217,35 @@ const TeacherManagement = () => {
     return errors;
   };
 
-  const next = () => {
-    const errors = validateStep();
+ const next = () => {
+  const stepErrorsArray = validateStep();
 
-    if (errors.length) {
-      errors.forEach((e) => toast.error(e));
-      return;
-    }
+  if (stepErrorsArray.length > 0) {
+    const errorMap = {};
 
-    setStep((s) => s + 1);
-  };
+    stepErrorsArray.forEach((err) => {
+      const lowerErr = err.toLowerCase();
+
+      if (lowerErr.includes("full name")) errorMap.fullName = err;
+      if (lowerErr.includes("phone") || lowerErr.includes("invalid phone")) errorMap.phone = err;
+      if (lowerErr.includes("email") || lowerErr.includes("invalid email")) errorMap.email = err;
+      if (lowerErr.includes("qualification")) errorMap.qualification = err;
+      if (lowerErr.includes("subject")) errorMap.subjects = err;
+      if (lowerErr.includes("designation")) errorMap.designation = err;
+      if (lowerErr.includes("joining date")) errorMap.joiningDate = err;
+      if (lowerErr.includes("username")) errorMap.username = err;
+      if (lowerErr.includes("password")) errorMap.password = err;
+      if (lowerErr.includes("role")) errorMap.role = err;
+    });
+
+    setErrors(errorMap);
+    toast.error("Please fill in the required fields.");
+    return;
+  }
+
+  setErrors({});
+  setStep((s) => s + 1);
+};
 
   const prev = () => {
     if (step > 1) setStep((s) => s - 1);
@@ -218,22 +253,23 @@ const TeacherManagement = () => {
 
   /* RESET */
 
-  const resetForm = () => {
-    if (!isDirty()) {
-      setForm(emptyForm);
-      setStep(1);
-      return;
-    }
+const resetForm = () => {
+  if (!isDirty()) {
+    setForm(emptyForm);
+    setStep(1);
+    return;
+  }
 
-    setConfirmMessage("Are you sure you want to reset the form?");
+  setConfirmMessage("Are you sure you want to reset the form?");
 
-    setConfirmAction(() => () => {
-      setForm(emptyForm);
-      setStep(1);
-    });
+  setConfirmAction(() => () => {
+    setForm(emptyForm);
+    setStep(1);
+    setErrors({});
+  });
 
-    setConfirmOpen(true);
-  };
+  setConfirmOpen(true);
+};
 
   /* SUBMIT */
 
@@ -454,6 +490,7 @@ const TeacherManagement = () => {
                   value={form.fullName}
                   onChange={handleChange}
                   placeholder="Enter full name"
+                  error={errors.fullName}
                 />
                 <Input
                   type="date"
@@ -472,9 +509,11 @@ const TeacherManagement = () => {
                 <Input
                   label="Phone *"
                   name="phone"
+                  type="tel"
                   value={form.phone}
                   onChange={handleChange}
                   placeholder="10-digit mobile number"
+                  error={errors.phone}
                 />
                 <Input
                   type="email"
@@ -483,6 +522,7 @@ const TeacherManagement = () => {
                   value={form.email}
                   onChange={handleChange}
                   placeholder="teacher@example.com"
+                  error={errors.email}
                 />
                 <Input
                   label="Government ID"
@@ -515,6 +555,7 @@ const TeacherManagement = () => {
                   value={form.qualification}
                   onChange={handleChange}
                   placeholder="B.Ed, M.A, etc"
+                  error={errors.qualification}
                 />
                 <Input
                   type="number"
@@ -534,6 +575,7 @@ const TeacherManagement = () => {
                     value: s._id,
                   }))}
                   onChange={handleChange}
+                  // error={errors.subjects}
                 />
                 <Input
                   label="Department"
@@ -553,6 +595,7 @@ const TeacherManagement = () => {
                   value={form.designation}
                   onChange={handleChange}
                   placeholder="e.g., Senior Teacher, HOD"
+                   error={errors.designation}
                 />
                 <Input
                   type="date"
@@ -560,6 +603,7 @@ const TeacherManagement = () => {
                   name="joiningDate"
                   value={form.joiningDate}
                   onChange={handleChange}
+                  error={errors.joiningDate}
                 />
                 <Select
                   label="Employment Type"
@@ -608,6 +652,7 @@ const TeacherManagement = () => {
                   value={form.role}
                   options={["Teacher", "Class Teacher", "HOD", "Coordinator"]}
                   onChange={handleChange}
+                  error={errors.role}
                 />
 
                 <Input
@@ -616,6 +661,7 @@ const TeacherManagement = () => {
                   value={form.username}
                   onChange={handleChange}
                   placeholder="Login username"
+                  error={errors.username}
                 />
 
                 <Input
@@ -624,7 +670,8 @@ const TeacherManagement = () => {
                     isEdit
                       ? "Password (leave blank to keep current)"
                       : "Password *"
-                  }
+                  } 
+                  defaultValue="123456"
                   name="password"
                   value={form.password}
                   onChange={handleChange}
@@ -679,12 +726,11 @@ const TeacherManagement = () => {
               {step < steps.length ? (
                 <button
                   onClick={next}
-                  disabled={validateStep().length > 0}
                   className={`px-6 py-2 rounded-lg text-white ml-auto transition
                   ${
                     validateStep().length
-                      ? "bg-[rgb(var(--primary))] cursor-not-allowed"
-                      : "bg-[rgb(var(--primary))] "
+                      ? "bg-[rgb(var(--primary))]"
+                      : "bg-[rgb(var(--primary))]"
                   }`}
                 >
                   Next
@@ -717,13 +763,14 @@ const TeacherManagement = () => {
 
 export default TeacherManagement;
 
-const Input = ({ label, className = "", ...props }) => (
+const Input = ({ label, className = "" ,error, ...props }) => (
   <div className={className}>
     <label className="block text-sm mb-1 text-[rgb(var(--text))]">{label}</label>
     <input
       {...props}
       className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
     />
+    {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
   </div>
 );
 
@@ -734,6 +781,7 @@ const Select = ({
   value,
   name,
   onChange,
+  error,
   ...props
 }) => {
   const handleChange = (e) => {
@@ -776,17 +824,18 @@ const Select = ({
       </select>
 
       {multiple && (
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-[rgb(var(--text))] mt-1">
           Hold Ctrl/Cmd to select multiple
         </p>
       )}
+       {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
     </div>
   );
 };
 
-const File = ({ label, name, onChange }) => (
+const File = ({ label, name, onChange,error}) => (
   <div>
-    <label className="block text-sm mb-1 text-gray-600">{label}</label>
+    <label className="block text-sm mb-1 text-[rgb(var(--text))]">{label}</label>
     <input
       type="file"
       name={name}
@@ -794,7 +843,8 @@ const File = ({ label, name, onChange }) => (
       accept="image/*"
       className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
     />
-    <p className="text-xs text-gray-500 mt-1">Max size: 2MB</p>
+     {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
+    <p className="text-xs text-[rgb(var(--text))] mt-1">Max size: 2MB</p>
   </div>
 );
 
