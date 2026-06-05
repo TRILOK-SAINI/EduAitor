@@ -93,6 +93,16 @@ export const createStudent = async (req, res) => {
     await uploadFile("studentAadhar", "documents");
     await uploadFile("fatherAadhar", "documents");
     await uploadFile("motherAadhar", "documents");
+    const existingUser = await Student.findOne({
+  schoolId,
+  username: safeBody.username,
+});
+if (existingUser) {
+  return res.status(400).json({
+    success: false,
+    message: "Username already exists",
+  });
+}
 
     const studentId = await generateStudentId(schoolId);
 

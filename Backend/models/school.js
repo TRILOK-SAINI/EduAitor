@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import { MODULE_KEYS } from "../constants/module.js";
 const schoolSchema = new mongoose.Schema(
   {
     school_name: {
@@ -65,6 +65,16 @@ const schoolSchema = new mongoose.Schema(
     
     temp_password: {
       type: String,
+    },
+      school_logo: {
+      type: String,        
+      default: null,
+    },
+
+    subscribed_modules: {
+      type: [String],
+      enum: MODULE_KEYS,  
+      default: [],
     },
   },
   { timestamps: true },

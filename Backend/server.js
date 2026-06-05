@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
-
+import School from "./models/school.js";
 dotenv.config();
 
 const app = express();
@@ -82,55 +82,81 @@ import blogRoute from "./routes/blogRoute.js";
 
 import { authMiddleware } from "./auth/auth.js";
 
-app.get("/api/auth/me", authMiddleware, (req, res) => {
-  if (req.user.role === "super_admin") {
-    return res.json({
-      success: true,
-      user: {
-        email: req.user.email,
-        role: req.user.role,
-      },
-    });
-  } else if (req.user.role === "school_admin") {
-    return res.json({
-      success: true,
-      user: {
-        email: req.user.email,
-        role: req.user.role,
-        school_id: req.user.school_id,
-        name: req.user.name,
-        _id: req.user._id,
-      },
-    });
-  } else if (req.user.role === "teacher_admin") {
-    return res.json({
-      success: true,
-      user: {
-        email: req.user.email,
-        role: req.user.role,
-        school_id: req.user.school_id,
-        teacher_id: req.user.teacher_id,
-        name: req.user.name,
-        _id: req.user._id,
-      },
-    });
-  } else if (req.user.role === "student_admin") {
-    return res.json({
-      success: true,
-      user: {
-        username: req.user.username,
-        role: req.user.role,
-        school_id: req.user.school_id,
-        student_id: req.user.student_id,
-        name: req.user.name,
-        _id: req.user._id,
-      },
-    });
-  } else {
+app.get("/api/auth/me", authMiddleware, async (req, res) => {  // async added
+  try {
+    /* ---------- SUPER ADMIN ---------- */
+    if (req.user.role === "super_admin") {
+      return res.json({
+        success: true,
+        user: {
+          email: req.user.email,
+          role: req.user.role,
+          subscribed_modules: [], // super admin has no module restriction
+        },
+      });
+    }
+
+    /* ---------- FETCH SCHOOL MODULES (for all school-bound roles) ---------- */
+    // school_id is in JWT for all 3 roles below
+    const school = await School
+      .findById(req.user.school_id)
+      .select("subscribed_modules");
+
+    const subscribed_modules = school?.subscribed_modules || [];
+
+    /* ---------- SCHOOL ADMIN ---------- */
+    if (req.user.role === "school_admin") {
+      return res.json({
+        success: true,
+        user: {
+          email: req.user.email,
+          role: req.user.role,
+          school_id: req.user.school_id,
+          name: req.user.name,
+          _id: req.user._id,
+          subscribed_modules, // ← added
+        },
+      });
+    }
+
+    /* ---------- TEACHER ADMIN ---------- */
+    if (req.user.role === "teacher_admin") {
+      return res.json({
+        success: true,
+        user: {
+          email: req.user.email,
+          role: req.user.role,
+          school_id: req.user.school_id,
+          teacher_id: req.user.teacher_id,
+          name: req.user.name,
+          _id: req.user._id,
+          subscribed_modules, // ← added
+        },
+      });
+    }
+
+    /* ---------- STUDENT ADMIN ---------- */
+    if (req.user.role === "student_admin") {
+      return res.json({
+        success: true,
+        user: {
+          username: req.user.username,
+          role: req.user.role,
+          school_id: req.user.school_id,
+          student_id: req.user.student_id,
+          name: req.user.name,
+          _id: req.user._id,
+          subscribed_modules, // ← added
+        },
+      });
+    }
+
     return res.status(401).json({ success: false, message: "Unauthorized" });
+
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 app.post("/api/auth/logout", (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,

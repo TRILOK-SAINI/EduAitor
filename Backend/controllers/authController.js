@@ -41,6 +41,12 @@ export const loginUser = async (req, res) => {
     });
 
     if (teacher && (await bcrypt.compare(password, teacher.password))) {
+       const school = await School
+        .findById(teacher.schoolId)
+        .select("subscribed_modules");
+
+      const subscribed_modules = school?.subscribed_modules || [];
+
       const token = generateToken({
         role: "teacher_admin",
         email: teacher.email,
@@ -60,6 +66,7 @@ export const loginUser = async (req, res) => {
           name: teacher.fullName,
           email: teacher.email,
           school_id: teacher.schoolId,
+           subscribed_modules,
         },
       });
     }
@@ -68,6 +75,12 @@ export const loginUser = async (req, res) => {
     const student = await Student.findOne({ username: email });
 
     if (student && (await bcrypt.compare(password, student.password))) {
+      const school = await School
+        .findById(student.schoolId)
+        .select("subscribed_modules");
+
+      const subscribed_modules = school?.subscribed_modules || [];
+
       const token = generateToken({
         role: "student_admin",
         username: student.username,
@@ -87,7 +100,8 @@ export const loginUser = async (req, res) => {
           name: `${student.firstName} ${student.lastName}`,
           username: student.username,
           school_id: student.schoolId,
-          firstTimeLogin: student.firstTimeLogin
+          firstTimeLogin: student.firstTimeLogin,
+          subscribed_modules,
         },
       });
     }
@@ -119,6 +133,7 @@ export const loginUser = async (req, res) => {
         school_id: school._id,
         school_name: school.school_name,
         email: school.admin_email,
+        subscribed_modules: school.subscribed_modules || [],
       },
     });
   } catch (error) {
@@ -132,7 +147,7 @@ export const changePassWord = async (req, res) => {
 
   const okkreport = await Student.findByIdAndUpdate(req.user._id, {
     password: hashed,
-   firstTimeLogin: false,  // ye set nhi tha bs 
+   firstTimeLogin: false,   
   });
 
   res.json({ message: "Password updated successfully" });

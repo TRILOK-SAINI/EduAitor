@@ -15,10 +15,12 @@ import {
   getStudentIssuesBooks,
 } from "../controllers/libraryController.js";
 import { authMiddleware } from "../auth/auth.js";
+import checkModuleAccess from "../middlewares/checkModuleAccess.js";
 
 // SUPER ADMIN ROUTES
 router.get("/books/admin", authMiddleware, getAdminBooks);
 router.get("/issues/admin", authMiddleware, getAdminBookIssues);
+
 
 // LIBRARY ROUTES
 router.get("/books", authMiddleware, getBooks);
