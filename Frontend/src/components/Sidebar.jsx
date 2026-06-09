@@ -533,8 +533,9 @@ import {
   FaUserAlt,
   FaUsers,
   FaLock, // ADDED — lock icon for disabled modules
+  FaIdCard,
 } from "react-icons/fa";
-
+ import { FiUsers } from "react-icons/fi";
 import {
   FaBookJournalWhills,
   FaSchoolFlag,
@@ -769,6 +770,18 @@ const Sidebar = ({ closeSidebar }) => {
       path: "/school/blogs",
       module: "blogs", // ← ADDED
     },
+    {
+  name: "Staff",
+  icon: <FaUsers />,
+  path: "/school/staff",
+  module: "staff",       // ← must match key in modules.js
+},
+{
+  name: "Gate Pass",
+  icon: <FaIdCard />,
+  path: "/school/gatepass",
+  module: "gatepass",    // ← must match key in modules.js
+},
   ];
 
   /* ── TEACHER ADMIN MENU ── UPDATED: module keys added */
@@ -937,11 +950,41 @@ const Sidebar = ({ closeSidebar }) => {
     },
   ];
 
+  const staffAdminMenu = [
+  ...(isMobile
+    ? [{ name: "Menu", icon: <FaTachometerAlt />, path: "/staff/menu" }]
+    : []),
+
+  // always visible — no module key
+  { name: "Dashboard",     icon: <FaTachometerAlt />, path: "/staff/dashboard"    },
+  { name: "Notifications", icon: <FaBell />,          path: "/staff/notification" },
+
+  // module gated — only shown if in staff permissions
+  { name: "Students",   icon: <FaUserGraduate />,    path: "/staff/students",   module: "students"    },
+  { name: "Attendance", icon: <FaUserAlt />,          path: "/staff/attendance", module: "attendance"  },
+  { name: "Fees",       icon: <FaWallet />,           path: "/staff/fees",       module: "fees"        },
+  { name: "Library",    icon: <FaBookJournalWhills />, path: "/staff/library",   module: "library"     },
+  { name: "Transport",  icon: <FaBusAlt />,           path: "/staff/transport",  module: "transport"   },
+  { name: "Timetable",  icon: <FaClock />,            path: "/staff/timetable",  module: "timetable"   },
+  { name: "Syllabus",   icon: <FaBookDead />,         path: "/staff/syllabus",   module: "syllabus"    },
+  { name: "Diary",      icon: <FaBookOpen />,         path: "/staff/diary",      module: "diary"       },
+  { name: "Exams",      icon: <GiOpenBook />,         path: "/staff/exams",      module: "exams"       },
+  { name: "Assignments",icon: <GiSchoolBag />,        path: "/staff/assignments",module: "assignments" },
+  { name: "Groups",     icon: <FaUserGroup />,        path: "/staff/group",      module: "groups"      },
+  { name: "Staff",      icon: <FiUsers />,            path: "/staff/staff",      module: "staff"       },
+
+  // always visible
+  { name: "Notices",  icon: <FaBell />,        path: "/staff/notice"   },
+  { name: "Events",   icon: <FaCalendar />,    path: "/staff/event"    },
+  { name: "Calendar", icon: <FaCalendarAlt />, path: "/staff/calendar" },
+];
+
   let menu = [];
   if (role === "super_admin") menu = superAdminMenu;
   else if (role === "school_admin") menu = schoolAdminMenu;
   else if (role === "teacher_admin") menu = teacherAdminMenu;
   else if (role === "student_admin") menu = studentAdminMenu;
+  else if(role === "staff_admin") menu =  staffAdminMenu;
 
   const toggleMenu = (name) => {
     setOpenMenu(openMenu === name ? null : name);
@@ -968,10 +1011,17 @@ const Sidebar = ({ closeSidebar }) => {
     }
   };
 
-  const finalMenu =
-    user?.role === "student_admin"
-      ? menu.filter((item) => !item.module || hasModule(item.module))
-      : menu;
+  // REPLACE your current finalMenu with this:
+const finalMenu = (() => {
+  // super_admin — show everything, no filter
+  if (role === "super_admin") return menu;
+
+  // school_admin, teacher_admin — show all, lock handles disabled
+  if (role === "school_admin" || role === "teacher_admin") return menu;
+
+  // student_admin, staff_admin — hide items they can't access
+  return menu.filter((item) => !item.module || hasModule(item.module));
+})();
 
   return (
     <>

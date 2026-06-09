@@ -83,12 +83,15 @@ export default function Login() {
           navigate("/teacher/dashboard"); // desktop page
         }
         toast.success("Login successful! Welcome back.");
-      } else if (role === "student_admin") {
+      }
+       else if (role === "student_admin") {
         if (isFirstTime) {
           toast.info("Please change your default password to continue.");
           navigate("/change-password");
           return; // ✅ stop here, don't fall through
         }
+
+        
         if (isMobile) {
           navigate(from, { replace: true });
           navigate("/parent/menu");
@@ -97,6 +100,9 @@ export default function Login() {
         }
         toast.success("Login successful! Welcome back.");
       }
+      else if(role=== "staff_admin"){
+          navigate("/staff/dashboard");
+        }
     } catch {
       setError("Invalid credentials");
       toast.error("Login failed. Please check your credentials.");

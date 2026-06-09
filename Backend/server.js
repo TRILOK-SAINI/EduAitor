@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import School from "./models/school.js";
+import Staff from "./models/staff.js";
 dotenv.config();
 
 const app = express();
@@ -80,6 +81,7 @@ import groupRoute from "./routes/groupRoute.js";
 import notificationRoute from "./routes/notificationRoute.js";
 import blogRoute from "./routes/blogRoute.js";
 import classAttendanceRoute from "./routes/classAttendanceRoute.js";
+import staffRoute from "./routes/staffRoute.js";
 
 import { authMiddleware } from "./auth/auth.js";
 
@@ -139,6 +141,44 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {  // async added
         },
       });
     }
+
+    /* ---------- STAFF ADMIN ---------- */
+// ADDED: staff block
+if (req.user.role === "staff_admin") {
+
+  // fetch fresh permissions from DB — not from JWT
+  // so if school admin updates permissions, takes effect on next refresh
+  const staffMember = await Staff
+    .findById(req.user.staff_id)
+    .select("permissions status staffRole staffRoleCustom firstTimeLogin");
+
+  // staff deleted or deactivated
+  if (!staffMember || staffMember.status === "Inactive") {
+    return res.status(403).json({
+      success: false,
+      message: "Account inactive or not found.",
+    });
+  }
+
+  return res.json({
+    success: true,
+    user: {
+      role:            "staff_admin",
+      staff_id:        req.user.staff_id,
+      school_id:       req.user.school_id,
+      name:            req.user.name,
+      email:           req.user.email,
+      _id:             req.user._id,
+      staffRole:       staffMember.staffRole,
+      staffRoleCustom: staffMember.staffRoleCustom,
+      firstTimeLogin:  staffMember.firstTimeLogin,
+      permissions:     staffMember.permissions,      // ← always fresh from DB
+      subscribed_modules,                             // ← already fetched above
+      school_name:     school?.school_name,
+      school_logo:     school?.school_logo,
+    },
+  });
+}
 
     /* ---------- STUDENT ADMIN ---------- */
     if (req.user.role === "student_admin") {
@@ -211,7 +251,7 @@ app.use("/api/groups", groupRoute);
 app.use("/api/notifications", notificationRoute)
 app.use("/api/blogs", blogRoute);
  app.use("/api/class-attendance", classAttendanceRoute);
-
+app.use("/api/staff", staffRoute);
 // Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

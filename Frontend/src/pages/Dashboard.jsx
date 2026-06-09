@@ -96,7 +96,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div
+        {/* <div
           onClick={() => navigate("/admin/platform-analytics")}
           className="cursor-pointer bg-[rgb(var(--surface))] text-[rgb(var(--text))] rounded-xl shadow p-6 hover:shadow-lg transition"
         >
@@ -113,7 +113,7 @@ const Dashboard = () => {
 
             <span className="text-slate-500">Actions</span>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -77,6 +77,8 @@ import Blogs from "./pages/Blogs";
 import BlogDetail from "./components/BlogDetail";
 import AttendanceWithTabs from "./pages/AttendanceWithTabs";
 import StudentAttendanceDetail from "./pages/StudentAttendanceDetail";
+import StaffManagement from "./pages/StaffManagement";
+import StaffDashboard from "./pages/StaffDashboard";
 
 const App = () => {
   return (
@@ -167,6 +169,7 @@ const App = () => {
           <Route path="exam-marks" element={<PrincipalResultView />} />
           <Route path="library" element={<LibraryManagement />} />
           <Route path="blogs" element={<Blogs />} />
+          <Route path="staff" element={<StaffManagement />} />
 
           <Route path="*" element={<Navigate to="/school/dashboard" />} />
         </Route>
@@ -254,6 +257,40 @@ const App = () => {
 
           <Route path="*" element={<Navigate to="/parent/dashboard" />} />
         </Route>
+
+        <Route
+  path="/staff"
+  element={
+    <ProtectedRoute allowedRoles={["staff_admin"]}>
+      <AdminLayout />
+    </ProtectedRoute>
+  }
+>
+  {/* always accessible */}
+  {/* <Route path="menu"         element={<StaffMenu />} /> */}
+  <Route path="dashboard"    element={<StaffDashboard />} />
+  <Route path="notification" element={<NotificationPage />} />
+  <Route path="notice"       element={<Notice />} />
+  <Route path="event"        element={<Event />} />
+  <Route path="event/:id"    element={<EventView />} />
+  <Route path="calendar"     element={<TeacherCalendar />} />
+
+  {/* module gated pages — reuse existing components where possible */}
+  <Route path="students"    element={<Students />} />
+  <Route path="attendance"  element={<AttendanceReportPrincipal />} />
+  <Route path="fees"        element={<FeeCollection />} />
+  <Route path="library"     element={<LibraryManagement />} />
+  <Route path="transport"   element={<Transport />} />
+  <Route path="timetable"   element={<ReadTimetable />} />
+  <Route path="syllabus"    element={<Syllabus />} />
+  <Route path="diary"       element={<DiaryPrincipal />} />
+  <Route path="exams"       element={<ExamCreate />} />
+  <Route path="assignments" element={<Assignment />} />
+  <Route path="group"       element={<Group />} />
+  <Route path="staff"       element={<StaffManagement />} />
+
+  <Route path="*" element={<Navigate to="/staff/dashboard" />} />
+</Route>
 
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/admin/login" />} />

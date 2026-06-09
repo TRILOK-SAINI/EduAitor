@@ -209,7 +209,7 @@ function StudentAttendanceDetail({}) {
       {/* Student card */}
       <div className="bg-[rgb(var(--surface))] border border-[rgb(var(--border))] rounded-xl p-4 flex items-center gap-4 mb-5">
         <div
-          className="w-12 h-12 rounded-full flex items-center justify-center font-medium text-sm flex-shrink-0"
+          className="w-12 h-12 rounded-full flex items-center justify-center font-medium text-sm shrink-0"
           style={{ background: "#E6F1FB", color: "#0C447C" }}
         >
           {student ? getInitials(student.name) : "?"}
@@ -225,7 +225,7 @@ function StudentAttendanceDetail({}) {
           </p>
         </div>
         {summary?.total > 0 && (
-          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+          <div className="flex flex-col items-end gap-0.5 shrink-0">
             <span className="text-2xl font-medium" style={{ color: pctColor }}>
               {summary.percentage}%
             </span>
