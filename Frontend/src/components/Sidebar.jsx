@@ -267,6 +267,12 @@ const Sidebar = ({ closeSidebar }) => {
       path: "/school/gatepass",
       module: "gatepass", // ← must match key in modules.js
     },
+     {
+      name:"Messages",
+      icon:<FaBell/>,
+      path:"/school/messages",
+      // module:"messages"
+    }
   ];
 
   /* ── TEACHER ADMIN MENU ── UPDATED: module keys added */
@@ -357,6 +363,12 @@ const Sidebar = ({ closeSidebar }) => {
       icon:<FaIdCard />,
       path:"/teacher/gatepass",
       module:"gatepass",
+    },
+    {
+      name:"Messages",
+      icon:<FaBell/>,
+      path:"/teacher/messages",
+      // module:"messages"
     }
   ];
 
@@ -399,6 +411,12 @@ const Sidebar = ({ closeSidebar }) => {
       icon:<FaIdCard />,
       path:"/parent/gatepass",
       module:"gatepass",
+    },
+     {
+      name:"Messages",
+      icon:<FaBell/>,
+      path:"/parent/messages",
+      // module:"messages"
     }
   ];
 
@@ -467,6 +485,12 @@ const Sidebar = ({ closeSidebar }) => {
       path: "/student/blogs",
       module: "blogs",
     },
+     {
+      name:"Messages",
+      icon:<FaBell/>,
+      path:"/student/messages",
+      // module:"messages"
+    }
   ];
 
   const staffAdminMenu = [

@@ -83,6 +83,12 @@ import StaffManagement from "./pages/StaffManagement";
 import StaffDashboard from "./pages/StaffDashboard";
 import ParentGatepass from "./pages/ParentGatepass";
 import TeacherGatepass from "./pages/TeacherGatepass";
+import MessagesPage from "./pages/messagesingal/MessagePage";
+import NewMessagePage from "./pages/messagesingal/NewMessagePage";
+import ChatPage from "./pages/messagesingal/ChatPage";
+
+// message files -
+
 
 const App = () => {
   return (
@@ -176,6 +182,9 @@ const App = () => {
           <Route path="library" element={<LibraryManagement />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="staff" element={<StaffManagement />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages/new" element={<NewMessagePage />} />
+          <Route path="messages/:threadId" element={<ChatPage />} />
 
           <Route path="*" element={<Navigate to="/school/dashboard" />} />
         </Route>
@@ -220,6 +229,9 @@ const App = () => {
           <Route path="timetable" element={<ReadTimetable />} />
           <Route path="blogs" element={<Blogs />} />
            <Route path="gatepass" element={<TeacherGatepass />} />
+           <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages/new" element={<NewMessagePage />} />
+          <Route path="messages/:threadId" element={<ChatPage />} />
 
           <Route path="*" element={<Navigate to="/teacher/dashboard" />} />
         </Route>
@@ -248,6 +260,9 @@ const App = () => {
           <Route path="calendar" element={<TeacherCalendar />} />
           <Route path="blogs" element={<Blogs />} />
            <Route path="gatepass" element={<ParentGatepass />} />
+           <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages/new" element={<NewMessagePage />} />
+          <Route path="messages/:threadId" element={<ChatPage />} />
           {/* <Route
           path="timetable"
           element={
@@ -294,6 +309,9 @@ const App = () => {
           <Route path="event/:id" element={<EventView />} />
           <Route path="calendar" element={<TeacherCalendar />} />
           <Route path="blogs" element={<Blogs />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages/new" element={<NewMessagePage />} />
+          <Route path="messages/:threadId" element={<ChatPage />} />
           <Route path="*" element={<Navigate to="/student/dashboard" />} />
         </Route>
 
@@ -327,6 +345,9 @@ const App = () => {
           <Route path="assignments" element={<Assignment />} />
           <Route path="group" element={<Group />} />
           <Route path="staff" element={<StaffManagement />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="messages/new" element={<NewMessagePage />} />
+          <Route path="messages/:threadId" element={<ChatPage />} />
 
           <Route path="*" element={<Navigate to="/staff/dashboard" />} />
         </Route>

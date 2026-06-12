@@ -84,6 +84,7 @@ import blogRoute from "./routes/blogRoute.js";
 import classAttendanceRoute from "./routes/classAttendanceRoute.js";
 import staffRoute from "./routes/staffRoute.js";
 import gatepassRoute from "./routes/gatepassRoute.js";
+import messageSingalRoute from "./routes/messageSingalRoute.js";
 
 import { authMiddleware } from "./auth/auth.js";
 
@@ -290,6 +291,7 @@ app.use("/api/blogs", blogRoute);
 app.use("/api/class-attendance", classAttendanceRoute);
 app.use("/api/staff", staffRoute);
 app.use("/api/gatepass", gatepassRoute);
+app.use("/api/message-signal", messageSingalRoute);
 // Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

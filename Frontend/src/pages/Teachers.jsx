@@ -3,6 +3,7 @@ import axios from "axios";
 import { FaArrowLeft, FaPlus, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import MessageButton from "../components/MessageButton";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -299,6 +300,12 @@ const Teachers = () => {
 
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-2">
+                      <MessageButton 
+                          targetId={teacher._id} 
+                          targetModel="Teacher" 
+                          iconOnly={true}
+                          className="!bg-indigo-100 !text-indigo-600 hover:!bg-indigo-200 !rounded-md !p-2"
+                        />
                       <button
                         onClick={() =>
                           navigate(`/school/teacher-view/${teacher._id}`)

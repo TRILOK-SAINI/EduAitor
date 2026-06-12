@@ -75,7 +75,8 @@ export default function Login() {
           navigate("/admin/dashboard"); // desktop page
         }
         toast.success("Login successful! Welcome back.");
-      } else if (role === "school_admin") {
+      } 
+      else if (role === "school_admin") {
         if (isMobile) {
           navigate(from, { replace: true });
           navigate("/school/menu"); // mobile page

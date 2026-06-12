@@ -6,6 +6,7 @@ import { PiChartPieSliceBold } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FiTrash2 } from "react-icons/fi";
+import MessageButton from "../components/MessageButton";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -208,6 +209,13 @@ const Students = () => {
 
                     <td className="p-3">
                       <div className="flex justify-center gap-3">
+                  <MessageButton 
+                          targetId={student._id} 
+                          targetModel="Student" 
+                          iconOnly={true}
+                          className="!bg-indigo-100 !text-indigo-600 hover:!bg-indigo-200 !rounded-md !p-2"
+                        />
+
                         <button
                           onClick={() =>
                             navigate(`/school/student-view/${student._id}`)

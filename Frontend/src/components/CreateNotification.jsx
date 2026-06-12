@@ -169,6 +169,9 @@ const CreateNotification = () => {
           value={form.startingDate}
           onChange={(e) => setForm({ ...form, startingDate: e.target.value })}
           required
+          min={
+                      new Date(Date.now()).toISOString().split("T")[0]
+          }
         />
 <label className="mb-2 block text-xs font-semibold text-[rgb(var(--text-muted))]">
             ending Date
