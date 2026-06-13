@@ -9,66 +9,123 @@ import {
   FaCalendar,
   FaBookOpen,
   FaBlog,
+  FaChevronDown,
+  FaClipboardCheck,
 } from "react-icons/fa";
 import { FaBookJournalWhills } from "react-icons/fa6";
 import { GiOpenBook, GiSchoolBag } from "react-icons/gi";
-import { FaChevronDown } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import BlogFeed from "../components/BlogFeed";
+import UpComingNotifications from "../components/UpComingNotifications";
 
 /* ─── Color map ─────────────────────────────────────────────── */
-const COLOR_MAP = {
+export const COLOR_MAP = {
   Dashboard: { bg: "#FFF7ED", icon: "#F97316", dot: "#FED7AA" },
+
+  // Admin
+  "Platform Analytics": { bg: "#EEF2FF", icon: "#4F46E5", dot: "#C7D2FE" },
+  "Access Control": { bg: "#FDF4FF", icon: "#A855F7", dot: "#E9D5FF" },
+  School: { bg: "#EFF6FF", icon: "#3B82F6", dot: "#BFDBFE" },
+  "School Detail": { bg: "#F0FDF4", icon: "#22C55E", dot: "#BBF7D0" },
+
+  // Student / Principal
+  Students: { bg: "#EFF6FF", icon: "#3B82F6", dot: "#BFDBFE" },
+  Teachers: { bg: "#F0FDF4", icon: "#22C55E", dot: "#BBF7D0" },
+  Classes: { bg: "#FAF5FF", icon: "#A855F7", dot: "#E9D5FF" },
+  "My Classes": { bg: "#FAF5FF", icon: "#A855F7", dot: "#E9D5FF" },
+
   Attendance: { bg: "#FFF1F2", icon: "#F43F5E", dot: "#FFD5DB" },
-  Timetable: { bg: "#EFF6FF", icon: "#6366F1", dot: "#C7D2FE" },
-  Assignment: { bg: "#F0FDF4", icon: "#22C55E", dot: "#BBF7D0" },
+
+  Exams: { bg: "#FFF7ED", icon: "#EF4444", dot: "#FEE2E2" },
   "Exam Results": { bg: "#FFF7ED", icon: "#EF4444", dot: "#FEE2E2" },
+  "Exam Management": { bg: "#FFF7ED", icon: "#EF4444", dot: "#FEE2E2" },
+
+  Syllabus: { bg: "#F0FDF4", icon: "#10B981", dot: "#A7F3D0" },
+
+  Timetable: { bg: "#EFF6FF", icon: "#6366F1", dot: "#C7D2FE" },
+
+  Assignment: { bg: "#F8FAFC", icon: "#64748B", dot: "#CBD5E1" },
+
+  "Fee Management": { bg: "#FFFBEB", icon: "#D97706", dot: "#FDE68A" },
+
   Diary: { bg: "#FDF4FF", icon: "#C026D3", dot: "#F5D0FE" },
-  Library: { bg: "#F0FDFA", icon: "#0D9488", dot: "#99F6E4" },
-  Group: { bg: "#FAF5FF", icon: "#A855F7", dot: "#E9D5FF" },
-  Notices: { bg: "#FFF7ED", icon: "#EA580C", dot: "#FED7AA" },
+
   Events: { bg: "#FFF1F2", icon: "#E11D48", dot: "#FECDD3" },
+
+  Notices: { bg: "#FFF7ED", icon: "#EA580C", dot: "#FED7AA" },
+
   Calendar: { bg: "#EFF6FF", icon: "#0EA5E9", dot: "#BAE6FD" },
+
+  Library: { bg: "#F0FDFA", icon: "#0D9488", dot: "#99F6E4" },
+
+  Blog: { bg: "#F0FDFA", icon: "#0D9488", dot: "#99F6E4" },
   Blogs: { bg: "#F0FDFA", icon: "#0D9488", dot: "#99F6E4" },
+
+  Group: { bg: "#F0FDF4", icon: "#22C55E", dot: "#BBF7D0" },
+
+  "Transport Management": {
+    bg: "#F8FAFC",
+    icon: "#64748B",
+    dot: "#CBD5E1",
+  },
 };
 const DEFAULT_COLOR = { bg: "#F3F4F6", icon: "#6B7280", dot: "#E5E7EB" };
 
-/* ─── Exit Popup ─────────────────────────────────────────────── */
+/* ─── Exit Popup ────────────────────────────────────────────── */
 function ExitPopup({ onConfirm, onCancel }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center"
       style={{ background: "rgba(0,0,0,0.45)" }}
     >
-      <div className="w-full max-w-lg bg-white rounded-t-3xl px-6 pt-3 pb-10">
-        <div className="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-6" />
+      <div
+        className="w-full max-w-lg rounded-t-3xl px-6 pt-3 pb-10"
+        style={{ background: "rgb(var(--bg))" }}
+      >
+        <div
+          className="w-10 h-1 rounded-full mx-auto mb-6"
+          style={{ background: "rgb(var(--border))" }}
+        />
         <div className="flex flex-col items-center mb-7">
-          <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-2xl mb-4">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-4"
+            style={{ background: "rgb(var(--surface))" }}
+          >
             🚪
           </div>
-          <h2 className="text-lg font-extrabold text-slate-800 mb-1">
+          <h2
+            className="text-lg font-extrabold mb-1"
+            style={{ color: "rgb(var(--text))" }}
+          >
             Exit App?
           </h2>
-          <p className="text-sm text-slate-500 text-center leading-relaxed">
+          <p
+            className="text-sm text-center leading-relaxed"
+            style={{ color: "rgb(var(--text-muted))" }}
+          >
             Are you sure you want to logout and exit?
           </p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-3.5 rounded-2xl border border-slate-200 bg-slate-50
-                       text-sm font-extrabold text-slate-600 active:scale-95 transition-transform"
+            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-95 transition-transform border"
+            style={{
+              borderColor: "rgb(var(--border))",
+              background: "rgb(var(--surface))",
+              color: "rgb(var(--text))",
+            }}
           >
             Stay
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold text-white
-                       active:scale-95 transition-transform"
+            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold text-white active:scale-95 transition-transform"
             style={{
-              background: "linear-gradient(135deg,#1E3A5F 0%,#2563EB 100%)",
+              background:
+                "linear-gradient(135deg, rgb(var(--sidebar)) 0%, rgb(var(--primary)) 100%)",
             }}
           >
             Logout &amp; Exit
@@ -102,45 +159,49 @@ function AccordionPanel({ isOpen, children }) {
 }
 
 /* ─── Card tile ─────────────────────────────────────────────── */
-function MenuCard({ item, color, globalIdx, isOpen, onToggle }) {
+function MenuCard({ item, color, globalIdx, isOpen, onToggle, isDark }) {
   const navigate = useNavigate();
   const hasChildren = Boolean(item.children);
+
+  const iconBg = isDark ? "rgb(var(--surface))" : color.bg;
+  const dotColor = isDark ? "rgb(var(--border))" : color.dot;
 
   return (
     <div
       onClick={() => (hasChildren ? onToggle() : navigate(item.path))}
       className={[
-        "relative overflow-hidden flex flex-col items-center bg-white cursor-pointer select-none",
+        "relative overflow-hidden flex flex-col items-center cursor-pointer select-none",
         "px-3.5 pt-5 pb-4 transition-all duration-150 active:scale-95",
         isOpen ? "rounded-t-[18px] shadow-md" : "rounded-[18px] shadow-sm",
       ].join(" ")}
       style={{
+        background: "rgb(var(--bg))",
+        border: isOpen
+          ? `2px solid ${color.icon}40`
+          : "1px solid rgb(var(--border))",
         animationDelay: `${globalIdx * 45}ms`,
-        ...(isOpen ? { outline: `2px solid ${color.icon}25` } : {}),
       }}
     >
       <div
         className="absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-50 pointer-events-none"
-        style={{ background: color.dot }}
+        style={{ background: dotColor }}
       />
       <div
         className="flex items-center justify-center mb-3 rounded-[15px] text-[22px]"
-        style={{
-          width: 52,
-          height: 52,
-          background: color.bg,
-          color: color.icon,
-        }}
+        style={{ width: 52, height: 52, background: iconBg, color: color.icon }}
       >
         {item.icon}
       </div>
-      <p className="m-0 text-[12.5px] font-extrabold text-slate-800 text-center leading-snug">
+      <p
+        className="m-0 text-[12.5px] font-extrabold text-center leading-snug"
+        style={{ color: "rgb(var(--text))" }}
+      >
         {item.name}
       </p>
       {hasChildren && (
         <div
           className="mt-2 px-2.5 py-0.5 rounded-full flex items-center gap-1"
-          style={{ background: color.bg }}
+          style={{ background: iconBg }}
         >
           <span className="text-[10px] font-bold" style={{ color: color.icon }}>
             {item.children.length} items
@@ -160,22 +221,24 @@ function MenuCard({ item, color, globalIdx, isOpen, onToggle }) {
 }
 
 /* ─── Children list ─────────────────────────────────────────── */
-function ChildList({ children, color }) {
+function ChildList({ children, color, isDark }) {
   const navigate = useNavigate();
+  const listBg = isDark ? "rgb(var(--surface))" : color.bg;
+
   return (
     <div
       className="rounded-b-[18px] overflow-hidden"
-      style={{ background: color.bg }}
+      style={{ background: listBg }}
     >
       <div className="flex flex-col gap-2 p-3 pt-2">
         {children.map((child, idx) => (
           <div
             key={child.name}
             onClick={() => navigate(child.path)}
-            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3
-                       cursor-pointer active:scale-[0.97] transition-transform shadow-sm"
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 cursor-pointer active:scale-[0.97] transition-transform shadow-sm"
             style={{
-              border: `1.5px solid ${color.dot}`,
+              background: "rgb(var(--bg))",
+              border: "1.5px solid rgb(var(--border))",
               animationDelay: `${idx * 50}ms`,
             }}
           >
@@ -183,12 +246,15 @@ function ChildList({ children, color }) {
               className="w-2 h-2 rounded-full shrink-0"
               style={{ background: color.icon }}
             />
-            <span className="flex-1 text-[13.5px] font-bold text-slate-800">
+            <span
+              className="flex-1 text-[13.5px] font-bold"
+              style={{ color: "rgb(var(--text))" }}
+            >
               {child.name}
             </span>
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold"
-              style={{ background: color.bg, color: color.icon }}
+              style={{ background: listBg, color: color.icon }}
             >
               ›
             </div>
@@ -204,15 +270,30 @@ export default function StudentMenu() {
   const navigate = useNavigate();
   const [openItem, setOpenItem] = useState(null);
   const [showExit, setShowExit] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const { setUser } = useAuth();
   const API = import.meta.env.VITE_API_URL;
+
+  // ── Read + apply saved theme on mount ───────────────────────
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "theme-light";
+    document.documentElement.className = saved;
+    setIsDark(saved === "theme-dark");
+
+    const onStorage = () => {
+      const t = localStorage.getItem("theme") || "theme-light";
+      document.documentElement.className = t;
+      setIsDark(t === "theme-dark");
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const logout = async () => {
     try {
       await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
       toast.info("You have been logged out successfully.");
     } catch (err) {
-      console.error("Backend logout failed:", err);
       toast.error("Logout failed. Please try again.");
     }
     setUser(null);
@@ -221,15 +302,22 @@ export default function StudentMenu() {
     navigate("/admin/login", { replace: true });
   };
 
-  /* ─── Menu items ── student-specific routes only ─── */
   const menu = [
     {
       name: "Dashboard",
       icon: <FaTachometerAlt />,
       path: "/student/dashboard",
     },
-    { name: "Attendance", icon: <FaUsers />, path: "/student/attendance" },
-    { name: "Timetable", icon: <FaClock />, path: "/student/timetable" },
+    {
+      name: "Attendance",
+      icon: <FaClipboardCheck />,
+      path: "/student/attendance",
+    },
+    {
+      name: "Timetable",
+      icon: <FaClock />,
+      path: "/student/timetable",
+    },
     {
       name: "Assignment",
       icon: <GiSchoolBag />,
@@ -243,24 +331,47 @@ export default function StudentMenu() {
       icon: <GiOpenBook />,
       path: "/student/exam-result",
     },
-    { name: "Diary", icon: <FaBookOpen />, path: "/student/diary" },
+    {
+      name: "Diary",
+      icon: <FaBookOpen />,
+      path: "/student/diary",
+    },
     {
       name: "Library",
       icon: <FaBookJournalWhills />,
       path: "/student/library",
     },
-    { name: "Group", icon: <FaUsers />, path: "/student/group" },
-    { name: "Notices", icon: <FaBell />, path: "/student/notice" },
-    { name: "Events", icon: <FaCalendar />, path: "/student/event" },
-    { name: "Calendar", icon: <FaCalendarAlt />, path: "/student/calendar" },
-    { name: "Blogs", icon: <FaBlog />, path: "/student/blogs" },
+    {
+      name: "Group",
+      icon: <FaUsers />,
+      path: "/student/group",
+    },
+    {
+      name: "Notices",
+      icon: <FaBell />,
+      path: "/student/notice",
+    },
+    {
+      name: "Events",
+      icon: <FaCalendar />,
+      path: "/student/event",
+    },
+    {
+      name: "Calendar",
+      icon: <FaCalendarAlt />,
+      path: "/student/calendar",
+    },
+    {
+      name: "Blogs",
+      icon: <FaBlog />,
+      path: "/student/blogs",
+    },
   ];
 
-  /* Group into rows of 2 */
   const rows = [];
   for (let i = 0; i < menu.length; i += 2) rows.push(menu.slice(i, i + 2));
 
-  /* Back-button → exit popup on mobile */
+  // ── Mobile back-button → exit popup ─────────────────────────
   useEffect(() => {
     const isMobile =
       /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ||
@@ -268,18 +379,18 @@ export default function StudentMenu() {
     if (!isMobile) return;
 
     let isActive = true;
-    const pushStateSafely = () => {
+    const push = () => {
       if (window.history.state !== "menu-lock")
         window.history.pushState("menu-lock", "");
     };
+    push();
 
-    pushStateSafely();
     const onPopState = () => {
       if (!isActive) return;
-      pushStateSafely();
+      push();
       setShowExit(true);
     };
-    const onFocus = () => pushStateSafely();
+    const onFocus = () => push();
 
     window.addEventListener("popstate", onPopState);
     window.addEventListener("focus", onFocus);
@@ -291,8 +402,9 @@ export default function StudentMenu() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen" style={{ background: "rgb(var(--bg))" }}>
       <div className="p-4 flex flex-col gap-3">
+        <UpComingNotifications  />
         {rows.map((row, rowIdx) => {
           const openInRow = row.find(
             (item) => item.name === openItem && item.children,
@@ -313,6 +425,7 @@ export default function StudentMenu() {
                       color={color}
                       globalIdx={globalIdx}
                       isOpen={isOpen}
+                      isDark={isDark}
                       onToggle={() => setOpenItem(isOpen ? null : item.name)}
                     />
                   );
@@ -325,7 +438,11 @@ export default function StudentMenu() {
                   const color = COLOR_MAP[childItem.name] ?? DEFAULT_COLOR;
                   return (
                     <AccordionPanel isOpen={Boolean(openInRow)}>
-                      <ChildList children={childItem.children} color={color} />
+                      <ChildList
+                        children={childItem.children}
+                        color={color}
+                        isDark={isDark}
+                      />
                     </AccordionPanel>
                   );
                 })()}
@@ -335,6 +452,7 @@ export default function StudentMenu() {
       </div>
 
       <BlogFeed />
+
       {showExit && (
         <ExitPopup onConfirm={logout} onCancel={() => setShowExit(false)} />
       )}

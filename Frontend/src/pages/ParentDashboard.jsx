@@ -23,6 +23,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import UpComingNotifications from "../components/UpComingNotifications";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -354,6 +355,7 @@ const ParentDashboard = () => {
       </div>
 
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 text-[rgb(var(--text))] bg-[rgb(var(--bg))]">
+        <UpComingNotifications />
         {/* Top Stats */}
         <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard

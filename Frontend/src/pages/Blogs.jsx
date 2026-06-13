@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useAuth } from "../context/AuthContext"; // adjust path if needed
+import { useAuth } from "../context/AuthContext";
 import {
   Plus,
   Edit2,
@@ -20,9 +20,7 @@ import {
 
 const API = `${import.meta.env.VITE_API_URL}/blogs`;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SHARE SHEET
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Share Sheet ──────────────────────────────────────────────
 function ShareSheet({ shareUrl, onClose }) {
   const [copied, setCopied] = useState(false);
 
@@ -49,26 +47,55 @@ function ShareSheet({ shareUrl, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
+        style={{ background: "rgb(var(--bg))" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <p className="font-bold text-gray-800 text-base">Share this post</p>
+        <div
+          className="flex items-center justify-between px-5 py-4"
+          style={{ borderBottom: "1px solid rgb(var(--border))" }}
+        >
+          <p
+            className="font-bold text-base"
+            style={{ color: "rgb(var(--text))" }}
+          >
+            Share this post
+          </p>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition"
+            className="p-1.5 rounded-lg transition"
+            style={{ background: "rgb(var(--surface))" }}
           >
-            <X className="w-4 h-4 text-gray-500" />
+            <X
+              className="w-4 h-4"
+              style={{ color: "rgb(var(--text-muted))" }}
+            />
           </button>
         </div>
-        <div className="mx-5 mt-4 px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200">
-          <p className="text-xs text-gray-400 mb-0.5">Link</p>
-          <p className="text-xs text-gray-600 truncate">{shareUrl}</p>
+
+        <div
+          className="mx-5 mt-4 px-3 py-2.5 rounded-xl"
+          style={{
+            background: "rgb(var(--surface))",
+            border: "1px solid rgb(var(--border))",
+          }}
+        >
+          <p
+            className="text-xs mb-0.5"
+            style={{ color: "rgb(var(--text-muted))" }}
+          >
+            Link
+          </p>
+          <p className="text-xs truncate" style={{ color: "rgb(var(--text))" }}>
+            {shareUrl}
+          </p>
         </div>
+
         <div className="p-5 flex flex-col gap-2.5">
           <button
             onClick={handleWhatsApp}
-            className="flex items-center gap-4 w-full px-4 py-3 rounded-xl bg-green-50 hover:bg-green-100 transition text-left"
+            className="flex items-center gap-4 w-full px-4 py-3 rounded-xl transition text-left"
+            style={{ background: "rgb(var(--surface))" }}
           >
             <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center shrink-0">
               <svg
@@ -80,28 +107,50 @@ function ShareSheet({ shareUrl, onClose }) {
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-gray-800 text-sm">WhatsApp</p>
-              <p className="text-xs text-gray-400">Send as clickable link</p>
+              <p
+                className="font-semibold text-sm"
+                style={{ color: "rgb(var(--text))" }}
+              >
+                WhatsApp
+              </p>
+              <p
+                className="text-xs"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
+                Send as clickable link
+              </p>
             </div>
           </button>
+
           <button
             onClick={handleCopy}
-            className="flex items-center gap-4 w-full px-4 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-left"
+            className="flex items-center gap-4 w-full px-4 py-3 rounded-xl transition text-left"
+            style={{ background: "rgb(var(--surface))" }}
           >
             <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors ${copied ? "bg-green-500" : "bg-gray-200"}`}
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors"
+              style={{ background: copied ? "#22c55e" : "rgb(var(--border))" }}
             >
               {copied ? (
                 <Check className="w-4 h-4 text-white" />
               ) : (
-                <Copy className="w-4 h-4 text-gray-600" />
+                <Copy
+                  className="w-4 h-4"
+                  style={{ color: "rgb(var(--text-muted))" }}
+                />
               )}
             </div>
             <div>
-              <p className="font-semibold text-gray-800 text-sm">
+              <p
+                className="font-semibold text-sm"
+                style={{ color: "rgb(var(--text))" }}
+              >
                 {copied ? "Copied!" : "Copy Link"}
               </p>
-              <p className="text-xs text-gray-400">
+              <p
+                className="text-xs"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
                 {copied ? "Link copied to clipboard" : "Copy to clipboard"}
               </p>
             </div>
@@ -112,9 +161,7 @@ function ShareSheet({ shareUrl, onClose }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// IMAGE SLIDER
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Image Slider ─────────────────────────────────────────────
 function ImageSlider({ images }) {
   const [current, setCurrent] = useState(0);
   const timerRef = useRef(null);
@@ -135,14 +182,21 @@ function ImageSlider({ images }) {
 
   if (!images.length)
     return (
-      <div className="w-full h-48 bg-gray-100 flex items-center justify-center rounded-t-xl">
-        <ImageIcon className="w-10 h-10 text-gray-300" />
+      <div
+        className="w-full h-48 flex items-center justify-center rounded-t-xl"
+        style={{ background: "rgb(var(--surface))" }}
+      >
+        <ImageIcon
+          className="w-10 h-10"
+          style={{ color: "rgb(var(--border-strong))" }}
+        />
       </div>
     );
 
   return (
     <div
-      className="relative w-full rounded-t-xl overflow-hidden bg-gray-50 group"
+      className="relative w-full rounded-t-xl overflow-hidden group"
+      style={{ background: "rgb(var(--surface))" }}
       onMouseEnter={() => clearInterval(timerRef.current)}
       onMouseLeave={() => {
         if (images.length > 1)
@@ -187,9 +241,7 @@ function ImageSlider({ images }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BLOG CARD
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Blog Card ────────────────────────────────────────────────
 function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
   const [liked, setLiked] = useState(blog.hasLiked ?? false);
   const [likesCount, setLikesCount] = useState(blog.likes ?? 0);
@@ -204,7 +256,6 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
     setLikesCount(blog.likes ?? 0);
   }, [blog.hasLiked, blog.likes]);
 
-  // ── proper toggle (not one-way) ────────────────────────────────────────────
   const handleLike = async () => {
     if (likeLoading) return;
     setLikeLoading(true);
@@ -220,8 +271,7 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
       setLiked(data.hasLiked);
       setLikesCount(data.likes);
       onLikeUpdate?.(blog._id, data.likes, data.hasLiked);
-    } catch (err) {
-      console.error("Like failed:", err);
+    } catch {
       setLiked(wasLiked);
       setLikesCount((c) => (wasLiked ? c + 1 : c - 1));
     } finally {
@@ -233,25 +283,42 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div
+        className="rounded-xl shadow-sm overflow-hidden"
+        style={{
+          background: "rgb(var(--bg))",
+          border: "1px solid rgb(var(--border))",
+        }}
+      >
         <ImageSlider images={blog.images ?? []} />
         <div className="p-4">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1 min-w-0">
-              <span className="inline-block text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mb-1">
+              <span
+                className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full mb-1"
+                style={{
+                  color: "rgb(var(--primary))",
+                  background: "rgb(var(--surface))",
+                }}
+              >
                 {blog.category}
               </span>
-              <h3 className="text-base font-bold text-gray-800 leading-tight">
+              <h3
+                className="text-base font-bold leading-tight"
+                style={{ color: "rgb(var(--text))" }}
+              >
                 {blog.title}
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p
+                className="text-xs mt-0.5"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
                 {new Date(blog.createdAt).toLocaleDateString("en-IN", {
                   day: "numeric",
                   month: "short",
                   year: "numeric",
                 })}
                 {blog.studentName ? (
-                  // student-authored blog: show student name + class
                   <>
                     <span className="ml-1.5 before:content-['·'] before:mr-1.5">
                       {blog.studentName}
@@ -263,7 +330,6 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
                     )}
                   </>
                 ) : blog.createdByName ? (
-                  // teacher/admin authored blog: show their name
                   <span className="ml-1.5 before:content-['·'] before:mr-1.5">
                     {blog.createdByName}
                   </span>
@@ -271,13 +337,18 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
               </p>
             </div>
 
-            {/* Admin controls — only shown when canEdit is true (set by server) */}
             {blog.canEdit && (
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={() => onTogglePublic(blog._id)}
                   title={blog.isPublic ? "Make Private" : "Make Public"}
-                  className={`p-1.5 rounded-lg transition ${blog.isPublic ? "bg-green-50 text-green-600 hover:bg-green-100" : "bg-gray-100 text-gray-400 hover:bg-gray-200"}`}
+                  className="p-1.5 rounded-lg transition"
+                  style={{
+                    background: blog.isPublic
+                      ? "#f0fdf4"
+                      : "rgb(var(--surface))",
+                    color: blog.isPublic ? "#16a34a" : "rgb(var(--text-muted))",
+                  }}
                 >
                   {blog.isPublic ? (
                     <Eye className="w-3.5 h-3.5" />
@@ -287,13 +358,15 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
                 </button>
                 <button
                   onClick={() => onEdit(blog)}
-                  className="p-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition"
+                  className="p-1.5 rounded-lg transition"
+                  style={{ background: "#fffbeb", color: "#d97706" }}
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => onDelete(blog._id)}
-                  className="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition"
+                  className="p-1.5 rounded-lg transition"
+                  style={{ background: "#fef2f2", color: "#ef4444" }}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -301,28 +374,35 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
             )}
           </div>
 
-          <p className="text-sm text-gray-600 leading-relaxed">
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: "rgb(var(--text-muted))" }}
+          >
             {expanded || !isLong ? blog.content : blog.content.slice(0, 120)}
             {isLong && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="text-blue-500 text-xs font-medium ml-1"
+                className="text-xs font-medium ml-1"
+                style={{ color: "rgb(var(--primary))" }}
               >
                 {expanded ? " show less" : "...read more"}
               </button>
             )}
           </p>
 
-          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
-            {/* Like — full toggle for all roles */}
+          <div
+            className="flex items-center gap-4 mt-3 pt-3"
+            style={{ borderTop: "1px solid rgb(var(--border))" }}
+          >
             <button
               onClick={handleLike}
               disabled={likeLoading}
-              className={`flex items-center gap-1.5 text-sm font-medium transition-all active:scale-95 select-none
-                ${liked ? "text-red-500" : "text-gray-400 hover:text-red-400"}`}
+              className="flex items-center gap-1.5 text-sm font-medium transition-all active:scale-95 select-none"
+              style={{ color: liked ? "#ef4444" : "rgb(var(--text-muted))" }}
             >
               <Heart
-                className={`w-4 h-4 transition-all duration-200 ${liked ? "fill-red-500 stroke-red-500 scale-110" : "scale-100"}`}
+                className={`w-4 h-4 transition-all duration-200 ${liked ? "scale-110" : "scale-100"}`}
+                style={liked ? { fill: "#ef4444", stroke: "#ef4444" } : {}}
               />
               <span>
                 {likesCount > 0 ? likesCount : ""} {liked ? "Liked" : "Like"}
@@ -331,14 +411,21 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
 
             <button
               onClick={() => setShowShare(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-blue-500 transition-colors"
+              className="flex items-center gap-1.5 text-sm font-medium transition-colors"
+              style={{ color: "rgb(var(--text-muted))" }}
             >
               <Share2 className="w-4 h-4" />
               <span>Share</span>
             </button>
 
             {blog.canEdit && !blog.isPublic && (
-              <span className="ml-auto flex items-center gap-1 text-xs bg-red-200 px-2 py-0.5 rounded-full">
+              <span
+                className="ml-auto flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                style={{
+                  background: "rgb(var(--surface))",
+                  color: "rgb(var(--text-muted))",
+                }}
+              >
                 <EyeOff className="w-3 h-3" /> Private
               </span>
             )}
@@ -352,9 +439,7 @@ function BlogCard({ blog, onEdit, onDelete, onTogglePublic, onLikeUpdate }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BLOG FORM MODAL
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Blog Form Modal ──────────────────────────────────────────
 const CATEGORIES = [
   "General",
   "Did You Know",
@@ -403,13 +488,11 @@ function BlogFormModal({ blog, isStudent, onClose, onSave }) {
       fd.append("category", form.category);
       fd.append("isPublic", form.isPublic);
       files.forEach((f) => fd.append("images", f));
-      if (blog?._id) {
+      if (blog?._id)
         await axios.put(`${API}/${blog._id}`, fd, { withCredentials: true });
-      } else if (isStudent) {
+      else if (isStudent)
         await axios.post(`${API}/submit`, fd, { withCredentials: true });
-      } else {
-        await axios.post(API, fd, { withCredentials: true });
-      }
+      else await axios.post(API, fd, { withCredentials: true });
       onSave();
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
@@ -420,46 +503,87 @@ function BlogFormModal({ blog, isStudent, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[92vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-bold text-gray-800">
+      <div
+        className="rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[92vh] overflow-y-auto"
+        style={{ background: "rgb(var(--bg))" }}
+      >
+        <div
+          className="flex items-center justify-between p-5 sticky top-0 z-10"
+          style={{
+            background: "rgb(var(--bg))",
+            borderBottom: "1px solid rgb(var(--border))",
+          }}
+        >
+          <h2
+            className="text-lg font-bold"
+            style={{ color: "rgb(var(--text))" }}
+          >
             {blog ? "Edit Blog" : "New Blog"}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition"
+            className="p-1.5 rounded-lg transition"
+            style={{ background: "rgb(var(--surface))" }}
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X
+              className="w-5 h-5"
+              style={{ color: "rgb(var(--text-muted))" }}
+            />
           </button>
         </div>
+
         <div className="p-5 space-y-4">
+          {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: "rgb(var(--text))" }}
+            >
               Title <span className="text-red-400">*</span>
             </label>
             <input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="Enter blog title..."
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 transition"
+              style={{
+                background: "rgb(var(--surface))",
+                border: "1px solid rgb(var(--border))",
+                color: "rgb(var(--text))",
+              }}
             />
           </div>
+
+          {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: "rgb(var(--text))" }}
+            >
               Category
             </label>
             <select
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 transition"
+              style={{
+                background: "rgb(var(--surface))",
+                border: "1px solid rgb(var(--border))",
+                color: "rgb(var(--text))",
+              }}
             >
               {CATEGORIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
           </div>
+
+          {/* Content */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: "rgb(var(--text))" }}
+            >
               Content <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -467,16 +591,35 @@ function BlogFormModal({ blog, isStudent, onClose, onSave }) {
               onChange={(e) => setForm({ ...form, content: e.target.value })}
               placeholder="Write your blog content..."
               rows={5}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none transition"
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none transition"
+              style={{
+                background: "rgb(var(--surface))",
+                border: "1px solid rgb(var(--border))",
+                color: "rgb(var(--text))",
+              }}
             />
           </div>
+
+          {/* Images */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: "rgb(var(--text))" }}
+            >
               Images
             </label>
-            <label className="flex items-center gap-2 border-2 border-dashed border-gray-200 rounded-lg p-3 cursor-pointer hover:border-blue-300 transition">
-              <ImageIcon className="w-5 h-5 text-gray-400" />
-              <span className="text-sm text-gray-500">
+            <label
+              className="flex items-center gap-2 border-2 border-dashed rounded-lg p-3 cursor-pointer transition"
+              style={{ borderColor: "rgb(var(--border-strong))" }}
+            >
+              <ImageIcon
+                className="w-5 h-5"
+                style={{ color: "rgb(var(--text-muted))" }}
+              />
+              <span
+                className="text-sm"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
                 Click to upload images (max 10)
               </span>
               <input
@@ -494,7 +637,8 @@ function BlogFormModal({ blog, isStudent, onClose, onSave }) {
                     <img
                       src={p}
                       alt=""
-                      className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                      className="w-16 h-16 object-cover rounded-lg"
+                      style={{ border: "1px solid rgb(var(--border))" }}
                     />
                     <button
                       onClick={() => removePreview(i)}
@@ -507,29 +651,56 @@ function BlogFormModal({ blog, isStudent, onClose, onSave }) {
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3">
+
+          {/* Public toggle */}
+          <div
+            className="flex items-center justify-between rounded-xl p-3"
+            style={{ background: "rgb(var(--surface))" }}
+          >
             <div>
-              <p className="text-sm font-medium text-gray-700">Public Post</p>
-              <p className="text-xs text-gray-400">Visible to everyone</p>
+              <p
+                className="text-sm font-medium"
+                style={{ color: "rgb(var(--text))" }}
+              >
+                Public Post
+              </p>
+              <p
+                className="text-xs"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
+                Visible to everyone
+              </p>
             </div>
             <button
               onClick={() => setForm({ ...form, isPublic: !form.isPublic })}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${form.isPublic ? "bg-blue-500" : "bg-gray-300"}`}
+              className="relative w-11 h-6 rounded-full transition-colors duration-200"
+              style={{
+                background: form.isPublic
+                  ? "rgb(var(--primary))"
+                  : "rgb(var(--border-strong))",
+              }}
             >
               <span
-                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${form.isPublic ? "left-5.5" : "left-0.5"}`}
+                className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200"
+                style={{ left: form.isPublic ? "22px" : "2px" }}
               />
             </button>
           </div>
+
           {error && (
-            <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">
+            <p
+              className="text-sm text-red-500 px-3 py-2 rounded-lg"
+              style={{ background: "#fef2f2" }}
+            >
               {error}
             </p>
           )}
+
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full text-white py-2.5 rounded-xl font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: "rgb(var(--primary))" }}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {loading ? "Saving..." : blog ? "Update Blog" : "Publish Blog"}
@@ -540,26 +711,38 @@ function BlogFormModal({ blog, isStudent, onClose, onSave }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DELETE CONFIRM MODAL
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Delete Modal ─────────────────────────────────────────────
 function DeleteModal({ onCancel, onConfirm }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+      <div
+        className="rounded-2xl p-6 max-w-sm w-full shadow-xl"
+        style={{ background: "rgb(var(--bg))" }}
+      >
         <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
           <Trash2 className="w-6 h-6 text-red-500" />
         </div>
-        <h3 className="text-base font-bold text-gray-800 text-center mb-1">
+        <h3
+          className="text-base font-bold text-center mb-1"
+          style={{ color: "rgb(var(--text))" }}
+        >
           Delete Blog?
         </h3>
-        <p className="text-sm text-gray-500 text-center mb-5">
+        <p
+          className="text-sm text-center mb-5"
+          style={{ color: "rgb(var(--text-muted))" }}
+        >
           This will permanently delete the post and all its images.
         </p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition"
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition"
+            style={{
+              border: "1px solid rgb(var(--border))",
+              background: "rgb(var(--surface))",
+              color: "rgb(var(--text))",
+            }}
           >
             Cancel
           </button>
@@ -575,9 +758,7 @@ function DeleteModal({ onCancel, onConfirm }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PENDING BLOG CARD (teacher approval view)
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Pending Blog Card ────────────────────────────────────────
 function PendingBlogCard({ blog, onApprove, onReject }) {
   const [rejectMode, setRejectMode] = useState(false);
   const [reason, setReason] = useState("");
@@ -588,25 +769,45 @@ function PendingBlogCard({ blog, onApprove, onReject }) {
     : "Unknown Student";
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-amber-100 overflow-hidden">
+    <div
+      className="rounded-xl shadow-sm overflow-hidden"
+      style={{ background: "rgb(var(--bg))", border: "1px solid #fde68a" }}
+    >
       {blog.images?.length > 0 && <ImageSlider images={blog.images} />}
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              <span
+                className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  color: "rgb(var(--primary))",
+                  background: "rgb(var(--surface))",
+                }}
+              >
                 {blog.category}
               </span>
               <span className="inline-block text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
                 Pending Review
               </span>
             </div>
-            <h3 className="text-base font-bold text-gray-800 leading-tight">
+            <h3
+              className="text-base font-bold leading-tight"
+              style={{ color: "rgb(var(--text))" }}
+            >
               {blog.title}
             </h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p
+              className="text-xs mt-0.5"
+              style={{ color: "rgb(var(--text-muted))" }}
+            >
               By{" "}
-              <span className="font-medium text-gray-600">{studentName}</span>
+              <span
+                className="font-medium"
+                style={{ color: "rgb(var(--text))" }}
+              >
+                {studentName}
+              </span>
               <span className="mx-1.5">·</span>
               {new Date(blog.createdAt).toLocaleDateString("en-IN", {
                 day: "numeric",
@@ -617,12 +818,16 @@ function PendingBlogCard({ blog, onApprove, onReject }) {
           </div>
         </div>
 
-        <p className="text-sm text-gray-600 leading-relaxed mb-3">
+        <p
+          className="text-sm leading-relaxed mb-3"
+          style={{ color: "rgb(var(--text-muted))" }}
+        >
           {expanded || !isLong ? blog.content : blog.content.slice(0, 120)}
           {isLong && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-blue-500 text-xs font-medium ml-1"
+              className="text-xs font-medium ml-1"
+              style={{ color: "rgb(var(--primary))" }}
             >
               {expanded ? " show less" : "...read more"}
             </button>
@@ -630,7 +835,10 @@ function PendingBlogCard({ blog, onApprove, onReject }) {
         </p>
 
         {!rejectMode ? (
-          <div className="flex gap-2 pt-3 border-t border-gray-100">
+          <div
+            className="flex gap-2 pt-3"
+            style={{ borderTop: "1px solid rgb(var(--border))" }}
+          >
             <button
               onClick={() => onApprove(blog._id)}
               className="flex-1 flex items-center justify-center gap-1.5 bg-green-500 text-white text-sm font-semibold py-2 rounded-lg hover:bg-green-600 transition"
@@ -639,19 +847,28 @@ function PendingBlogCard({ blog, onApprove, onReject }) {
             </button>
             <button
               onClick={() => setRejectMode(true)}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-red-50 text-red-500 text-sm font-semibold py-2 rounded-lg hover:bg-red-100 transition"
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold py-2 rounded-lg transition"
+              style={{ background: "#fef2f2", color: "#ef4444" }}
             >
               <X className="w-4 h-4" /> Reject
             </button>
           </div>
         ) : (
-          <div className="pt-3 border-t border-gray-100 space-y-2">
+          <div
+            className="pt-3 space-y-2"
+            style={{ borderTop: "1px solid rgb(var(--border))" }}
+          >
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Reason for rejection (optional)..."
               rows={2}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
+              className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
+              style={{
+                background: "rgb(var(--surface))",
+                border: "1px solid rgb(var(--border))",
+                color: "rgb(var(--text))",
+              }}
             />
             <div className="flex gap-2">
               <button
@@ -668,7 +885,12 @@ function PendingBlogCard({ blog, onApprove, onReject }) {
                   setRejectMode(false);
                   setReason("");
                 }}
-                className="flex-1 border border-gray-200 text-gray-600 text-sm font-semibold py-2 rounded-lg hover:bg-gray-50 transition"
+                className="flex-1 text-sm font-semibold py-2 rounded-lg transition"
+                style={{
+                  border: "1px solid rgb(var(--border))",
+                  background: "rgb(var(--surface))",
+                  color: "rgb(var(--text))",
+                }}
               >
                 Cancel
               </button>
@@ -680,9 +902,7 @@ function PendingBlogCard({ blog, onApprove, onReject }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MY SUBMISSION CARD (student view of their own posts)
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── My Submission Card ───────────────────────────────────────
 function MySubmissionCard({ blog }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = blog.content.length > 120;
@@ -694,22 +914,33 @@ function MySubmissionCard({ blog }) {
   };
   const s = statusConfig[blog.status] ?? statusConfig.pending;
 
+  const borderColor =
+    blog.status === "rejected"
+      ? "#fee2e2"
+      : blog.status === "published"
+        ? "#bbf7d0"
+        : "#fde68a";
+
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border overflow-hidden ${
-        blog.status === "rejected"
-          ? "border-red-100"
-          : blog.status === "published"
-            ? "border-green-100"
-            : "border-amber-100"
-      }`}
+      className="rounded-xl shadow-sm overflow-hidden"
+      style={{
+        background: "rgb(var(--bg))",
+        border: `1px solid ${borderColor}`,
+      }}
     >
       {blog.images?.length > 0 && <ImageSlider images={blog.images} />}
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              <span
+                className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  color: "rgb(var(--primary))",
+                  background: "rgb(var(--surface))",
+                }}
+              >
                 {blog.category}
               </span>
               <span
@@ -718,10 +949,16 @@ function MySubmissionCard({ blog }) {
                 {s.label}
               </span>
             </div>
-            <h3 className="text-base font-bold text-gray-800 leading-tight">
+            <h3
+              className="text-base font-bold leading-tight"
+              style={{ color: "rgb(var(--text))" }}
+            >
               {blog.title}
             </h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p
+              className="text-xs mt-0.5"
+              style={{ color: "rgb(var(--text-muted))" }}
+            >
               {new Date(blog.createdAt).toLocaleDateString("en-IN", {
                 day: "numeric",
                 month: "short",
@@ -731,21 +968,27 @@ function MySubmissionCard({ blog }) {
           </div>
         </div>
 
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p
+          className="text-sm leading-relaxed"
+          style={{ color: "rgb(var(--text-muted))" }}
+        >
           {expanded || !isLong ? blog.content : blog.content.slice(0, 120)}
           {isLong && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-blue-500 text-xs font-medium ml-1"
+              className="text-xs font-medium ml-1"
+              style={{ color: "rgb(var(--primary))" }}
             >
               {expanded ? " show less" : "...read more"}
             </button>
           )}
         </p>
 
-        {/* Show rejection reason if rejected */}
         {blog.status === "rejected" && blog.rejectionReason && (
-          <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-100">
+          <div
+            className="mt-3 p-3 rounded-lg"
+            style={{ background: "#fef2f2", border: "1px solid #fee2e2" }}
+          >
             <p className="text-xs font-semibold text-red-600 mb-0.5">
               Teacher's feedback
             </p>
@@ -757,23 +1000,10 @@ function MySubmissionCard({ blog }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN PAGE
-// ─────────────────────────────────────────────────────────────────────────────
-const CATEGORIES_FILTER = [
-  "General",
-  "Did You Know",
-  "Story Time",
-  "Announcement",
-  "Achievement",
-  "Event",
-];
-
+// ─── Main Page ────────────────────────────────────────────────
 export default function Blogs() {
   const { user } = useAuth();
   const role = user?.role;
-
-  // school_admin and teacher_admin can create/edit their own posts
   const canCreate = role === "school_admin" || role === "teacher_admin";
 
   const [blogs, setBlogs] = useState([]);
@@ -781,11 +1011,22 @@ export default function Blogs() {
   const [showForm, setShowForm] = useState(false);
   const [editBlog, setEditBlog] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
-  const [filter, setFilter] = useState("all"); // all | public | private
-  // At the top of the Blogs() component, add pending count fetch for teachers:
-
+  const [filter, setFilter] = useState("all");
   const [pendingBlogs, setPendingBlogs] = useState([]);
-  const [activeTab, setActiveTab] = useState("feed"); // "feed" | "pending" | "my-submissions"
+  const [activeTab, setActiveTab] = useState("feed");
+  const [mySubmissions, setMySubmissions] = useState([]);
+
+  const fetchBlogs = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(API, { withCredentials: true });
+      setBlogs(data.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchPendingBlogs = async () => {
     if (role !== "teacher_admin" && role !== "school_admin") return;
@@ -810,8 +1051,6 @@ export default function Blogs() {
       console.error(err);
     }
   };
-
-  const [mySubmissions, setMySubmissions] = useState([]);
 
   useEffect(() => {
     fetchBlogs();
@@ -840,22 +1079,6 @@ export default function Blogs() {
       console.error(err);
     }
   };
-
-  const fetchBlogs = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get(API, { withCredentials: true });
-      setBlogs(data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
 
   const handleDelete = async () => {
     try {
@@ -889,92 +1112,101 @@ export default function Blogs() {
     );
   };
 
-  // students/parents only see public blogs; admins/teachers see all
-  // Blogs.jsx — replace visibleBlogs
   const visibleBlogs = blogs.filter((b) => {
-    // always exclude pending/rejected from main feed for everyone
     if (b.status === "pending" || b.status === "rejected") return false;
-
-    if (role === "student_admin") {
-      return b.isPublic; // students: public only
-    }
-
-    // school_admin / teacher_admin: apply public/private filter tab
+    if (role === "student_admin") return b.isPublic;
     if (filter === "public") return b.isPublic;
     if (filter === "private") return !b.isPublic;
     return true;
   });
 
-  // blogs created by this user (school_admin / teacher_admin)
   const myPosts = blogs.filter((b) => b.canEdit && !b.studentAuthor);
 
+  // Tab button helper
+  const tabBtn = (id, label, count, activeColor = "rgb(var(--primary))") => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className="text-xs px-3 py-1 rounded-full font-semibold transition shrink-0"
+      style={
+        activeTab === id
+          ? { background: activeColor, color: "#fff" }
+          : {
+              background: "rgb(var(--surface))",
+              color: "rgb(var(--text-muted))",
+            }
+      }
+    >
+      {label}
+      {count !== undefined && (
+        <span className="ml-1 text-[10px] opacity-70">{count}</span>
+      )}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* ── Sticky header ── */}
-      <div className="bg-white border-b sticky top-0 z-20 shadow-sm">
+    <div className="min-h-screen" style={{ background: "rgb(var(--bg))" }}>
+      {/* Sticky header */}
+      <div
+        className="sticky top-0 z-20 shadow-sm"
+        style={{
+          background: "rgb(var(--bg))",
+          borderBottom: "1px solid rgb(var(--border))",
+        }}
+      >
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-gray-800">
+            <h1
+              className="text-lg font-bold"
+              style={{ color: "rgb(var(--text))" }}
+            >
               {role === "student_admin" ? "School Blogs" : "Blogs"}
             </h1>
-            <p className="text-xs text-gray-400">{visibleBlogs.length} posts</p>
+            <p className="text-xs" style={{ color: "rgb(var(--text-muted))" }}>
+              {visibleBlogs.length} posts
+            </p>
           </div>
 
-          {/* Create button — only for school_admin and teacher_admin */}
-          {/* Create button */}
-          {canCreate && activeTab !== "pending" && (
+          {(canCreate && activeTab !== "pending") ||
+          role === "student_admin" ? (
             <button
               onClick={() => {
                 setEditBlog(null);
                 setShowForm(true);
               }}
-              className="flex items-center gap-1.5 bg-blue-600 text-white text-sm font-semibold px-3 py-2 rounded-lg hover:bg-blue-700 transition active:scale-95"
+              className="flex items-center gap-1.5 text-white text-sm font-semibold px-3 py-2 rounded-lg transition active:scale-95"
+              style={{ background: "rgb(var(--primary))" }}
             >
               <Plus className="w-4 h-4" />
-              <span>New Blog</span>
+              <span>
+                {role === "student_admin" ? "Write Post" : "New Blog"}
+              </span>
             </button>
-          )}
-          {role === "student_admin" && (
-            <button
-              onClick={() => {
-                setEditBlog(null);
-                setShowForm(true);
-              }}
-              className="flex items-center gap-1.5 bg-blue-600 text-white text-sm font-semibold px-3 py-2 rounded-lg hover:bg-blue-700 transition active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Write Post</span>
-            </button>
-          )}
+          ) : null}
         </div>
 
         {/* Tab bar */}
         <div className="max-w-2xl mx-auto px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
-          <button
-            onClick={() => setActiveTab("feed")}
-            className={`text-xs px-3 py-1 rounded-full font-semibold transition shrink-0 ${activeTab === "feed" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-          >
-            Feed
-          </button>
+          {tabBtn("feed", "Feed")}
 
-          {/* school_admin / teacher_admin: their own posts */}
-          {(role === "school_admin" || role === "teacher_admin") && (
-            <button
-              onClick={() => setActiveTab("my-posts")}
-              className={`text-xs px-3 py-1 rounded-full font-semibold transition shrink-0 ${activeTab === "my-posts" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-            >
-              My Posts
-              <span className="ml-1 text-[10px] opacity-70">
-                {blogs.filter((b) => b.canEdit && !b.studentAuthor).length}
-              </span>
-            </button>
-          )}
+          {(role === "school_admin" || role === "teacher_admin") &&
+            tabBtn(
+              "my-posts",
+              "My Posts",
+              blogs.filter((b) => b.canEdit && !b.studentAuthor).length,
+            )}
 
-          {/* Teacher/Admin: pending approvals */}
           {(role === "teacher_admin" || role === "school_admin") && (
             <button
               onClick={() => setActiveTab("pending")}
-              className={`text-xs px-3 py-1 rounded-full font-semibold transition flex items-center gap-1 shrink-0 ${activeTab === "pending" ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+              className="text-xs px-3 py-1 rounded-full font-semibold transition flex items-center gap-1 shrink-0"
+              style={
+                activeTab === "pending"
+                  ? { background: "#f59e0b", color: "#fff" }
+                  : {
+                      background: "rgb(var(--surface))",
+                      color: "rgb(var(--text-muted))",
+                    }
+              }
             >
               Pending
               {pendingBlogs.length > 0 && (
@@ -987,61 +1219,65 @@ export default function Blogs() {
             </button>
           )}
 
-          {/* Student: their own submissions */}
-          {role === "student_admin" && (
-            <button
-              onClick={() => setActiveTab("my-submissions")}
-              className={`text-xs px-3 py-1 rounded-full font-semibold transition shrink-0 ${activeTab === "my-submissions" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-            >
-              My Posts
-              <span className="ml-1 text-[10px] opacity-70">
-                {mySubmissions.length}
-              </span>
-            </button>
-          )}
+          {role === "student_admin" &&
+            tabBtn("my-submissions", "My Posts", mySubmissions.length)}
 
-          {/* Public/Private filter — only on feed tab for non-students */}
-          {activeTab === "feed" && role !== "student_admin" && (
-            <>
-              {[
-                ["all", "All"],
-                ["public", "Public"],
-                ["private", "Private"],
-              ].map(([val, label]) => (
-                <button
-                  key={val}
-                  onClick={() => setFilter(val)}
-                  className={`text-xs px-3 py-1 rounded-full font-semibold transition shrink-0 ${filter === val ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-                >
-                  {label}
-                  <span className="ml-1 text-[10px] opacity-70">
-                    {val === "all"
-                      ? blogs.length
-                      : val === "public"
-                        ? blogs.filter((b) => b.isPublic).length
-                        : blogs.filter((b) => !b.isPublic).length}
-                  </span>
-                </button>
-              ))}
-            </>
-          )}
+          {activeTab === "feed" &&
+            role !== "student_admin" &&
+            [
+              ["all", "All", blogs.length],
+              ["public", "Public", blogs.filter((b) => b.isPublic).length],
+              ["private", "Private", blogs.filter((b) => !b.isPublic).length],
+            ].map(([val, label, count]) => (
+              <button
+                key={val}
+                onClick={() => setFilter(val)}
+                className="text-xs px-3 py-1 rounded-full font-semibold transition shrink-0"
+                style={
+                  filter === val
+                    ? { background: "rgb(var(--primary))", color: "#fff" }
+                    : {
+                        background: "rgb(var(--surface))",
+                        color: "rgb(var(--text-muted))",
+                      }
+                }
+              >
+                {label}{" "}
+                <span className="ml-1 text-[10px] opacity-70">{count}</span>
+              </button>
+            ))}
         </div>
       </div>
 
-      {/* ── Blog feed ── */}
+      {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            <p className="text-sm text-gray-400">Loading blogs...</p>
+            <Loader2
+              className="w-8 h-8 animate-spin"
+              style={{ color: "rgb(var(--primary))" }}
+            />
+            <p className="text-sm" style={{ color: "rgb(var(--text-muted))" }}>
+              Loading blogs...
+            </p>
           </div>
         ) : activeTab === "pending" ? (
-          // ── Pending approval queue ──
           pendingBlogs.length === 0 ? (
             <div className="text-center py-24">
-              <Check className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-              <p className="font-semibold text-gray-400">All caught up!</p>
-              <p className="text-sm text-gray-300 mt-1">
+              <Check
+                className="w-12 h-12 mx-auto mb-3"
+                style={{ color: "rgb(var(--border-strong))" }}
+              />
+              <p
+                className="font-semibold"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
+                All caught up!
+              </p>
+              <p
+                className="text-sm mt-1"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
                 No blogs waiting for approval.
               </p>
             </div>
@@ -1056,12 +1292,22 @@ export default function Blogs() {
             ))
           )
         ) : activeTab === "my-posts" ? (
-          // ── Admin / Teacher: their own posts ──
           myPosts.length === 0 ? (
             <div className="text-center py-24">
-              <ImageIcon className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-              <p className="font-semibold text-gray-400">No posts yet</p>
-              <p className="text-sm text-gray-300 mt-1">
+              <ImageIcon
+                className="w-12 h-12 mx-auto mb-3"
+                style={{ color: "rgb(var(--border-strong))" }}
+              />
+              <p
+                className="font-semibold"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
+                No posts yet
+              </p>
+              <p
+                className="text-sm mt-1"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
                 Create your first blog post!
               </p>
             </div>
@@ -1081,12 +1327,22 @@ export default function Blogs() {
             ))
           )
         ) : activeTab === "my-submissions" ? (
-          // ── Student's own submissions ──
           mySubmissions.length === 0 ? (
             <div className="text-center py-24">
-              <ImageIcon className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-              <p className="font-semibold text-gray-400">No submissions yet</p>
-              <p className="text-sm text-gray-300 mt-1">
+              <ImageIcon
+                className="w-12 h-12 mx-auto mb-3"
+                style={{ color: "rgb(var(--border-strong))" }}
+              />
+              <p
+                className="font-semibold"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
+                No submissions yet
+              </p>
+              <p
+                className="text-sm mt-1"
+                style={{ color: "rgb(var(--text-muted))" }}
+              >
                 Submit a blog post for your teacher to review.
               </p>
             </div>
@@ -1095,11 +1351,18 @@ export default function Blogs() {
               <MySubmissionCard key={blog._id} blog={blog} />
             ))
           )
-        ) : // ── Main feed ──
-        visibleBlogs.length === 0 ? (
+        ) : visibleBlogs.length === 0 ? (
           <div className="text-center py-24">
-            <ImageIcon className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-            <p className="font-semibold text-gray-400">No blogs found</p>
+            <ImageIcon
+              className="w-12 h-12 mx-auto mb-3"
+              style={{ color: "rgb(var(--border-strong))" }}
+            />
+            <p
+              className="font-semibold"
+              style={{ color: "rgb(var(--text-muted))" }}
+            >
+              No blogs found
+            </p>
           </div>
         ) : (
           visibleBlogs.map((blog) => (
@@ -1129,8 +1392,7 @@ export default function Blogs() {
           onSave={() => {
             setShowForm(false);
             setEditBlog(null);
-            if (role === "student_admin")
-              fetchMySubmissions(); // refresh submissions
+            if (role === "student_admin") fetchMySubmissions();
             else fetchBlogs();
           }}
         />

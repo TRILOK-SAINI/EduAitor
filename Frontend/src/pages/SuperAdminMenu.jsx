@@ -2,52 +2,24 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaTachometerAlt,
-  FaClock,
-  FaWallet,
-  FaCalendarAlt,
-  FaBell,
-  FaBusAlt,
-  FaBookDead,
-  FaCalendar,
-  FaBookOpen,
   FaChevronDown,
-  FaUserGraduate,
-  FaUserAlt,
   FaUserShield,
   FaSchool,
   FaChartLine,
 } from "react-icons/fa";
-
-import {
-  FaBookJournalWhills,
-  FaSchoolFlag,
-  FaUserGroup,
-} from "react-icons/fa6";
-import { FiUsers } from "react-icons/fi";
-import { GiOpenBook, GiTeacher, GiSchoolBag } from "react-icons/gi";
-import { HiAcademicCap } from "react-icons/hi2";
+import { FaSchoolFlag } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import UpComingNotifications from "../components/UpComingNotifications";
 
 /* ─── Color map ─────────────────────────────────────────────── */
 const COLOR_MAP = {
   Dashboard: { bg: "#FFF7ED", icon: "#F97316", dot: "#FED7AA" },
   "Platform Analytics": { bg: "#EEF2FF", icon: "#4F46E5", dot: "#C7D2FE" },
-  Students: { bg: "#EFF6FF", icon: "#3B82F6", dot: "#BFDBFE" },
-  Teachers: { bg: "#F0FDF4", icon: "#22C55E", dot: "#BBF7D0" },
-  Classes: { bg: "#FAF5FF", icon: "#A855F7", dot: "#E9D5FF" },
-  Attendance: { bg: "#FFF1F2", icon: "#F43F5E", dot: "#FFD5DB" },
-  "Exam Management": { bg: "#FFF7ED", icon: "#EF4444", dot: "#FEE2E2" },
-  Syllabus: { bg: "#F0FDF4", icon: "#10B981", dot: "#A7F3D0" },
-  Timetable: { bg: "#EFF6FF", icon: "#6366F1", dot: "#C7D2FE" },
-  "Fee Management": { bg: "#FFFBEB", icon: "#D97706", dot: "#FDE68A" },
-  Diary: { bg: "#FDF4FF", icon: "#C026D3", dot: "#F5D0FE" },
-  Events: { bg: "#FFF1F2", icon: "#E11D48", dot: "#FECDD3" },
-  Notices: { bg: "#FFF7ED", icon: "#EA580C", dot: "#FED7AA" },
-  Calendar: { bg: "#EFF6FF", icon: "#0EA5E9", dot: "#BAE6FD" },
-  "Transport Management": { bg: "#F8FAFC", icon: "#64748B", dot: "#CBD5E1" },
-  Library: { bg: "#F0FDFA", icon: "#0D9488", dot: "#99F6E4" },
+  "Access Control": { bg: "#FDF4FF", icon: "#A855F7", dot: "#E9D5FF" },
+  School: { bg: "#EFF6FF", icon: "#3B82F6", dot: "#BFDBFE" },
+  "School Detail": { bg: "#F0FDF4", icon: "#22C55E", dot: "#BBF7D0" },
 };
 const DEFAULT_COLOR = { bg: "#F3F4F6", icon: "#6B7280", dot: "#E5E7EB" };
 
@@ -55,20 +27,35 @@ const DEFAULT_COLOR = { bg: "#F3F4F6", icon: "#6B7280", dot: "#E5E7EB" };
 function ExitPopup({ onConfirm, onCancel }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end justify-center"
       style={{ background: "rgba(0,0,0,0.45)" }}
     >
-      <div className="w-full max-w-lg bg-white rounded-t-3xl px-6 pt-3 pb-10 animate-slide-up">
-        <div className="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-6" />
+      <div
+        className="w-full max-w-lg rounded-t-3xl px-6 pt-3 pb-10"
+        style={{ background: "rgb(var(--bg))" }}
+      >
+        <div
+          className="w-10 h-1 rounded-full mx-auto mb-6"
+          style={{ background: "rgb(var(--border))" }}
+        />
 
         <div className="flex flex-col items-center mb-7">
-          <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-2xl mb-4">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-4"
+            style={{ background: "rgb(var(--surface))" }}
+          >
             🚪
           </div>
-          <h2 className="text-lg font-extrabold text-slate-800 mb-1">
+          <h2
+            className="text-lg font-extrabold mb-1"
+            style={{ color: "rgb(var(--text))" }}
+          >
             Exit App?
           </h2>
-          <p className="text-sm text-slate-500 text-center leading-relaxed">
+          <p
+            className="text-sm text-center leading-relaxed"
+            style={{ color: "rgb(var(--text-muted))" }}
+          >
             Are you sure you want to logout and exit?
           </p>
         </div>
@@ -76,17 +63,21 @@ function ExitPopup({ onConfirm, onCancel }) {
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-3.5 rounded-2xl border border-slate-200 bg-slate-50
-                       text-sm font-extrabold text-slate-600 active:scale-95 transition-transform"
+            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-95 transition-transform border"
+            style={{
+              borderColor: "rgb(var(--border))",
+              background: "rgb(var(--surface))",
+              color: "rgb(var(--text))",
+            }}
           >
             Stay
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold text-white
-                       active:scale-95 transition-transform"
+            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold text-white active:scale-95 transition-transform"
             style={{
-              background: "linear-gradient(135deg,#1E3A5F 0%,#2563EB 100%)",
+              background:
+                "linear-gradient(135deg, rgb(var(--sidebar)) 0%, rgb(var(--primary)) 100%)",
             }}
           >
             Logout &amp; Exit
@@ -97,20 +88,13 @@ function ExitPopup({ onConfirm, onCancel }) {
   );
 }
 
-/* ─── Accordion panel — ALWAYS rendered, never unmounted ───────
-   KEY FIX: conditional rendering caused unmount on close so
-   the closing animation never played. Now we keep it mounted
-   and drive open/close purely through max-height transition.
-──────────────────────────────────────────────────────────────── */
+/* ─── Accordion panel ───────────────────────────────────────── */
 function AccordionPanel({ isOpen, children }) {
   const innerRef = useRef(null);
   const [height, setHeight] = useState(0);
 
-  /* Measure whenever children change */
   useEffect(() => {
-    if (innerRef.current) {
-      setHeight(innerRef.current.scrollHeight);
-    }
+    if (innerRef.current) setHeight(innerRef.current.scrollHeight);
   });
 
   return (
@@ -127,27 +111,34 @@ function AccordionPanel({ isOpen, children }) {
 }
 
 /* ─── Card tile ─────────────────────────────────────────────── */
-function MenuCard({ item, color, globalIdx, isOpen, onToggle }) {
+function MenuCard({ item, color, globalIdx, isOpen, onToggle, isDark }) {
   const navigate = useNavigate();
   const hasChildren = Boolean(item.children);
+
+  // In dark mode the hardcoded pastel bg/dot colors look out of place,
+  // so we blend them toward the surface color.
+  const cardBg = isDark ? "rgb(var(--surface))" : color.bg;
+  const dotColor = isDark ? "rgb(var(--border))" : color.dot;
 
   return (
     <div
       onClick={() => (hasChildren ? onToggle() : navigate(item.path))}
       className={[
-        "relative overflow-hidden flex flex-col items-center bg-white cursor-pointer select-none",
-        "px-3.5 pt-5 pb-4 transition-all duration-150 active:scale-95 animate-fade-slide-up",
+        "relative overflow-hidden flex flex-col items-center cursor-pointer select-none",
+        "px-3.5 pt-5 pb-4 transition-all duration-150 active:scale-95",
         isOpen ? "rounded-t-[18px] shadow-md" : "rounded-[18px] shadow-sm",
       ].join(" ")}
       style={{
-        animationDelay: `${globalIdx * 45}ms`,
-        ...(isOpen ? { outline: `2px solid ${color.icon}25` } : {}),
+        background: "rgb(var(--bg))",
+        border: isOpen
+          ? `2px solid ${color.icon}40`
+          : "1px solid rgb(var(--border))",
       }}
     >
       {/* Decorative dot */}
       <div
         className="absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-50 pointer-events-none"
-        style={{ background: color.dot }}
+        style={{ background: dotColor }}
       />
 
       {/* Icon bubble */}
@@ -156,7 +147,7 @@ function MenuCard({ item, color, globalIdx, isOpen, onToggle }) {
         style={{
           width: 52,
           height: 52,
-          background: color.bg,
+          background: cardBg,
           color: color.icon,
         }}
       >
@@ -164,7 +155,10 @@ function MenuCard({ item, color, globalIdx, isOpen, onToggle }) {
       </div>
 
       {/* Name */}
-      <p className="m-0 text-[12.5px] font-extrabold text-slate-800 text-center leading-snug">
+      <p
+        className="m-0 text-[12.5px] font-extrabold text-center leading-snug"
+        style={{ color: "rgb(var(--text))" }}
+      >
         {item.name}
       </p>
 
@@ -172,7 +166,7 @@ function MenuCard({ item, color, globalIdx, isOpen, onToggle }) {
       {hasChildren && (
         <div
           className="mt-2 px-2.5 py-0.5 rounded-full flex items-center gap-1"
-          style={{ background: color.bg }}
+          style={{ background: cardBg }}
         >
           <span className="text-[10px] font-bold" style={{ color: color.icon }}>
             {item.children.length} items
@@ -192,36 +186,42 @@ function MenuCard({ item, color, globalIdx, isOpen, onToggle }) {
 }
 
 /* ─── Children list ─────────────────────────────────────────── */
-function ChildList({ children, color }) {
+function ChildList({ children, color, isDark }) {
   const navigate = useNavigate();
+  const listBg = isDark ? "rgb(var(--surface))" : color.bg;
+
   return (
     <div
       className="rounded-b-[18px] overflow-hidden"
-      style={{ background: color.bg }}
+      style={{ background: listBg }}
     >
       <div className="flex flex-col gap-2 p-3 pt-2">
         {children.map((child, idx) => (
           <div
             key={child.name}
             onClick={() => navigate(child.path)}
-            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3
-                       cursor-pointer active:scale-[0.97] transition-transform
-                       shadow-sm animate-fade-slide-right"
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 cursor-pointer active:scale-[0.97] transition-transform shadow-sm"
             style={{
-              border: `1.5px solid ${color.dot}`,
-              animationDelay: `${idx * 50}ms`,
+              background: "rgb(var(--bg))",
+              border: `1.5px solid rgb(var(--border))`,
             }}
           >
             <div
               className="w-2 h-2 rounded-full shrink-0"
               style={{ background: color.icon }}
             />
-            <span className="flex-1 text-[13.5px] font-bold text-slate-800">
+            <span
+              className="flex-1 text-[13.5px] font-bold"
+              style={{ color: "rgb(var(--text))" }}
+            >
               {child.name}
             </span>
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold"
-              style={{ background: color.bg, color: color.icon }}
+              style={{
+                background: listBg,
+                color: color.icon,
+              }}
             >
               ›
             </div>
@@ -233,28 +233,39 @@ function ChildList({ children, color }) {
 }
 
 /* ─── Root ──────────────────────────────────────────────────── */
-export default function TeacherMenu() {
+export default function SuperAdminMenu() {
   const navigate = useNavigate();
   const [openItem, setOpenItem] = useState(null);
   const [showExit, setShowExit] = useState(false);
-  const { user, loading, setUser } = useAuth();
+  const [isDark, setIsDark] = useState(false);
+  const { user, setUser } = useAuth();
   const API = import.meta.env.VITE_API_URL;
+
+  // ── Read saved theme on mount (same as Topbar) ──────────────
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "theme-light"; // ← fallback
+    if (saved) {
+      document.documentElement.className = saved;
+      setIsDark(saved === "theme-dark");
+    }
+    // Re-check when storage changes (e.g. Topbar changed it in another tab)
+    const onStorage = () => {
+      const t = localStorage.getItem("theme") || "";
+      document.documentElement.className = t;
+      setIsDark(t === "theme-dark");
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const logout = async () => {
     try {
-      const res = await axios.post(
-        `${API}/auth/logout`,
-        {},
-        {
-          withCredentials: true,
-        },
-      );
+      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
       toast.info("You have been logged out successfully.");
     } catch (err) {
-      console.error("Backend logout failed:", err);
       toast.error("Logout failed. Please try again.");
     }
-    setUser(null); // Clear user from context
+    setUser(null);
     localStorage.clear();
     sessionStorage.clear();
     navigate("/admin/login", { replace: true });
@@ -262,11 +273,11 @@ export default function TeacherMenu() {
 
   const menu = [
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/admin/dashboard" },
-    {
-      name: "Platform Analytics",
-      icon: <FaChartLine />,
-      path: "/admin/platform-analytics",
-    },
+    // {
+    //   name: "Platform Analytics",
+    //   icon: <FaChartLine />,
+    //   path: "/admin/platform-analytics",
+    // },
     {
       name: "Access Control",
       icon: <FaUserShield />,
@@ -291,52 +302,33 @@ export default function TeacherMenu() {
       path: "/admin/school-detail",
     },
   ];
-  /* Group into rows of 2 — keeps grid columns stable */
+
   const rows = [];
   for (let i = 0; i < menu.length; i += 2) rows.push(menu.slice(i, i + 2));
 
-  /* ── Mobile back-button → exit popup ──────────────────────────
-     FIX: empty dependency array (runs once on mount only),
-     no pathname check (component only ever mounts at /school/menu),
-     re-push null state to keep user trapped on this page.
-  ─────────────────────────────────────────────────────────────── */
+  // ── Mobile back-button → exit popup ─────────────────────────
   useEffect(() => {
     const isMobile =
       /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ||
       window.innerWidth <= 768;
-
     if (!isMobile) return;
 
     let isActive = true;
-
-    const pushStateSafely = () => {
-      // Avoid stacking multiple entries
-      if (window.history.state !== "menu-lock") {
+    const push = () => {
+      if (window.history.state !== "menu-lock")
         window.history.pushState("menu-lock", "");
-      }
     };
+    push();
 
-    // Initial push
-    pushStateSafely();
-
-    const onPopState = (e) => {
+    const onPopState = () => {
       if (!isActive) return;
-
-      // Always re-push so user stays here
-      pushStateSafely();
-
+      push();
       setShowExit(true);
     };
+    const onFocus = () => push();
 
     window.addEventListener("popstate", onPopState);
-
-    // 🔥 IMPORTANT: handle when user comes back to tab/page
-    const onFocus = () => {
-      pushStateSafely();
-    };
-
     window.addEventListener("focus", onFocus);
-
     return () => {
       isActive = false;
       window.removeEventListener("popstate", onPopState);
@@ -344,23 +336,20 @@ export default function TeacherMenu() {
     };
   }, []);
 
-  const handleLogout = () => {
-    logout();
-  };
-
   return (
-    <div className="min-h-screen bg-slate-100 font-nunito">
-      {/* Grid — row-based so accordion never breaks column count */}
+    <div
+      className="min-h-screen font-nunito"
+      style={{ background: "rgb(var(--bg))" }} // ← uses CSS variable
+    >
       <div className="p-4 flex flex-col gap-3">
         {rows.map((row, rowIdx) => {
-          /* Find the open item in this row (there can be at most one open globally) */
           const openInRow = row.find(
             (item) => item.name === openItem && item.children,
           );
 
           return (
             <div key={rowIdx} className="flex flex-col">
-              {/* Always 2-column card row */}
+              <UpComingNotifications />
               <div className="grid grid-cols-2 gap-3">
                 {row.map((item, colIdx) => {
                   const color = COLOR_MAP[item.name] ?? DEFAULT_COLOR;
@@ -374,23 +363,24 @@ export default function TeacherMenu() {
                       color={color}
                       globalIdx={globalIdx}
                       isOpen={isOpen}
+                      isDark={isDark}
                       onToggle={() => setOpenItem(isOpen ? null : item.name)}
                     />
                   );
                 })}
               </div>
 
-              {/* AccordionPanel is ALWAYS rendered for every row that has a child-item.
-                  It is never conditionally mounted/unmounted — only open/closed via
-                  max-height so the closing transition always plays. */}
               {row.some((item) => item.children) &&
                 (() => {
-                  /* Pick the child-item in this row (open or not — panel stays mounted) */
                   const childItem = openInRow ?? row.find((i) => i.children);
                   const color = COLOR_MAP[childItem.name] ?? DEFAULT_COLOR;
                   return (
                     <AccordionPanel isOpen={Boolean(openInRow)}>
-                      <ChildList children={childItem.children} color={color} />
+                      <ChildList
+                        children={childItem.children}
+                        color={color}
+                        isDark={isDark}
+                      />
                     </AccordionPanel>
                   );
                 })()}
@@ -400,10 +390,7 @@ export default function TeacherMenu() {
       </div>
 
       {showExit && (
-        <ExitPopup
-          onConfirm={handleLogout}
-          onCancel={() => setShowExit(false)}
-        />
+        <ExitPopup onConfirm={logout} onCancel={() => setShowExit(false)} />
       )}
     </div>
   );

@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft } from "react-icons/fa";
 import CreateNotification from "../components/CreateNotification";
+import UpcomingNotifications from "../components/UpComingNotifications";
 
 const API = import.meta.env.VITE_API_URL;
 const settingsKey = "schoolDashboardVisibility";
@@ -435,6 +436,7 @@ const SchoolDashboard = () => {
                 Monitor reports, fee health, attendance, notices, events, and
                 daily action points from one control center.
               </p>
+              <UpcomingNotifications />
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               {/* Settings — secondary style */}

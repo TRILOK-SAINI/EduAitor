@@ -51,26 +51,34 @@ const isNotificationRead = (notification) => {
   });
 };
 const getPriority = (n) => {
-  if (!n.startingDate) return 3;
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const start = new Date(n.startingDate);
+  const relevantDate = n.startingDate || n.endingDate;
+  if (!relevantDate) return 5; // no date → bottom, sort by createdAt
+
+  const start = new Date(relevantDate);
   start.setHours(0, 0, 0, 0);
 
-  const diffDays = Math.floor(
-    (start - today) / (1000 * 60 * 60 * 24)
-  );
+  // If endingDate exists and has fully passed → lowest priority
+  if (n.endingDate) {
+    const end = new Date(n.endingDate);
+    end.setHours(0, 0, 0, 0);
+    if (end < today) return 6;
+  }
 
-  if (diffDays < 0) return 4; // passed
-  if (diffDays <= 1) return 0; // today/tomorrow
-  if (diffDays <= 3) return 1; // next 3 days
-  if (diffDays <= 7) return 2; // this week
+  const diffDays = Math.floor((start - today) / (1000 * 60 * 60 * 24));
 
-  return 3; // future
+  // startingDate passed but event still ongoing
+  if (diffDays < 0 && n.endingDate && new Date(n.endingDate) >= today) return 0;
+  if (diffDays < 0)  return 6; // fully passed
+
+  if (diffDays === 0) return 0; // today
+  if (diffDays === 1) return 1; // tomorrow  ← separate bucket now
+  if (diffDays <= 3)  return 2; // next 3 days
+  if (diffDays <= 7)  return 3; // this week
+  return 4;                      // future
 };
-
 const sortedNotifications = [...notifications].sort((a, b) => {
   const priorityDiff = getPriority(a) - getPriority(b);
 

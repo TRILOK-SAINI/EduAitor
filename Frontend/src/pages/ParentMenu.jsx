@@ -36,6 +36,7 @@ import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import BlogFeed from "../components/BlogFeed";
 
+
 /* ─── Color map ─────────────────────────────────────────────── */
 const COLOR_MAP = {
   Dashboard: { bg: "#FFF7ED", icon: "#F97316", dot: "#FED7AA" },

@@ -1,8 +1,11 @@
 import React from 'react'
-
+import UpComingNotifications from '../components/UpComingNotifications'
 function StaffDashboard() {
   return (
-    <div>
+    <div> 
+      <UpComingNotifications />
+
+      
       staff page coming soon...
     </div>
   )

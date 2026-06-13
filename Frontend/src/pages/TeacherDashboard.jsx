@@ -16,6 +16,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft, FaBookReader } from "react-icons/fa";
+import UpComingNotifications from "../components/UpComingNotifications";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -359,6 +360,7 @@ const TeacherDashboard = () => {
       </div>
 
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+              <UpComingNotifications />
         {/* Top Stats */}
         {visibility.stats && (
           <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-4">

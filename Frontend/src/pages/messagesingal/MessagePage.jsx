@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { FiPlus, FiSearch, FiMessageSquare } from "react-icons/fi";
+import {FaArrowLeft} from "react-icons/fa"
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -155,6 +156,8 @@ export default function MessagesPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const isMobile = window.innerWidth <= 768;
+
 
   // ── Role based path ────────────────────────────────────────
   let path = "";
@@ -215,6 +218,22 @@ export default function MessagesPage() {
     height: "calc(100vh - 57px)", // 57px = your Topbar height
   }}
 >
+         {isMobile && (
+              <div className="px-4 pt-4">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl
+                       bg-[rgb(var(--primary))] shadow-sm border border-slate-100
+                       text-sm font-bold 0 active:scale-95 transition-transform mb-2.5"
+                >
+                  <FaArrowLeft size={16} />
+                  Back
+                </button>
+              </div>
+            )}
+
+            
+
       {/* ── FIXED HEADER ── */}
       <div
         className="shrink-0 flex items-center justify-between
@@ -224,6 +243,11 @@ export default function MessagesPage() {
           borderColor: "rgb(var(--border))",
         }}
       >
+{!isMobile && (
+  <button 
+              onClick={() => navigate(`${path}/dashboard`)}> 
+            <FaArrowLeft /> </button>
+)}
         <h1
           className="text-xl font-bold"
           style={{ color: "rgb(var(--primary))" }}
