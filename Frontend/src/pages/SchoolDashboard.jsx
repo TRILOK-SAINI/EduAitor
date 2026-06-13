@@ -439,7 +439,6 @@ const SchoolDashboard = () => {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               {/* Settings — secondary style */}
-              <UpcomingNotifications />
               <button
                 onClick={() => setSettingsOpen((value) => !value)}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] px-4 py-3 text-sm font-bold text-[rgb(var(--text))] transition hover:border-[rgb(var(--border-strong))]"
@@ -460,16 +459,16 @@ const SchoolDashboard = () => {
 
           {settingsOpen && (
             <DashboardSettingsControl
-              visibility={visibility}
-              onToggle={(key) =>
+            visibility={visibility}
+            onToggle={(key) =>
                 setVisibility((current) => ({
                   ...current,
                   [key]: !current[key],
                 }))
               }
               onReset={() => setVisibility(defaultVisibility)}
-            />
-          )}
+              />
+            )}
         </div>
       </div>
 
@@ -478,6 +477,7 @@ const SchoolDashboard = () => {
       {/* ─── Body ───────────────────────────────────────────────────────────── */}
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
 
+            <UpcomingNotifications />
         {/* Stat row */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
