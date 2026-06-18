@@ -88,7 +88,7 @@ import messageSingalRoute from "./routes/messageSingalRoute.js";
 
 import { authMiddleware } from "./auth/auth.js";
 import {startNotificationCron} from "./cron/notificationCron.js"
-startNotificationCron();
+// startNotificationCron();
 app.get("/api/auth/me", authMiddleware, async (req, res) => {
   // async added
   try {

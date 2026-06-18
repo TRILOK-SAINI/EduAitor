@@ -1001,7 +1001,7 @@ const Input = ({ label, type = "text", min, value, onChange }) => (
       min={min}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-xl border border-[rgb(var(--primary))] bg-[rgb(var(--surface))] p-3.5 text-sm outline-none focus:border-blue-400 focus:bg-white"
+      className="w-full rounded-xl border border-[rgb(var(--primary))] bg-[rgb(var(--surface))] p-3.5 text-sm outline-none"
       required
     />
   </div>
@@ -1015,7 +1015,7 @@ const Select = ({ label, value, options, onChange }) => (
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-xl border border-[rgb(var(--primary))] bg-[rgb(var(--surface))] p-3.5 text-sm outline-none focus:border-blue-400"
+      className="w-full rounded-xl border border-[rgb(var(--primary))] bg-[rgb(var(--surface))] p-3.5 text-sm outline-none"
       required
     >
       <option value="">Select category</option>

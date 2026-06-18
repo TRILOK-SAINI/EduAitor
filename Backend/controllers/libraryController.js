@@ -141,7 +141,7 @@ const buildIssueFilters = ({ schoolId, status, search }) => {
 
 export const addBook = async (req, res) => {
   try {
-    const schoolId = req.user?.school_id;
+    const schoolId = req?.user?.school_id;
     const { title, author, isbn, totalCopies, category } = req.body;
 
     if (!schoolId || !title || !author || !isbn || !category) {
