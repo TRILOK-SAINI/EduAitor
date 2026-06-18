@@ -148,42 +148,40 @@ const AdminLayout = () => {
   );
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* TOPBAR */}
+    <div className="h-screen bg-[rgb(var(--bg))] overflow-hidden flex flex-col">
+      {/* FULL WIDTH TOPBAR */}
       <Topbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-      {/* MAIN LAYOUT */}
       <div className="flex flex-1 overflow-hidden">
-        {/* DESKTOP SIDEBAR */}
-        <div className="hidden lg:block w-56 border-r">
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:flex w-70 shrink-0">
           <Sidebar />
-        </div>
+        </aside>
 
-        {/* MOBILE SIDEBAR */}
+        {/* Mobile Sidebar */}
         {sidebarOpen && (
-          <div className="fixed inset-0 z-40 lg:hidden flex">
-            {/* overlay */}
+          <div className="fixed inset-0 z-50 lg:hidden">
             <div
-              className="absolute inset-0 bg-black/40"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
               onClick={() => setSidebarOpen(false)}
             />
 
-            {/* sidebar */}
-            <div className="relative z-50 w-56 bg-white h-full">
+            <div className="absolute left-0 top-0 h-full w-70 bg-white shadow-2xl">
               <Sidebar closeSidebar={() => setSidebarOpen(false)} />
             </div>
           </div>
         )}
 
-        {/* CONTENT */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
-          <div className="">
-            <Outlet />
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="px-4 md:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
+            <div className="max-w-400 mx-auto">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>
 
-      {/* MOBILE BOTTOM NAV */}
       <BottomNav items={navItems} className="lg:hidden" />
 
       {showProfile && <ProfileSheet onClose={() => setShowProfile(false)} />}

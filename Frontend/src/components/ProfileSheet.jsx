@@ -45,27 +45,25 @@ const ProfileSheet = ({ onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: "rgba(0,0,0,0.45)" }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-t-3xl px-6 pt-3 pb-10"
-        style={{ background: "rgb(var(--bg))" }}
+        className="w-full max-w-lg rounded-t-3xl px-6 pt-3 pb-10 bg-[rgb(var(--bg))]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className="w-10 h-1 rounded-full mx-auto mb-6"
-          style={{ background: "rgb(var(--border))" }}
-        />
+        {/* Drag handle */}
+        <div className="w-10 h-1 rounded-full mx-auto mb-6 bg-[rgb(var(--border))]" />
 
-        {/* User info */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-full bg-[rgb(var(--primary))] flex items-center justify-center text-sm font-bold text-white shadow">
+        {/* User info card */}
+        <div className="flex items-center gap-3 mb-6 p-3 rounded-2xl bg-[rgba(var(--primary),0.06)]">
+          <div className="w-12 h-12 rounded-full bg-[rgb(var(--primary))] flex items-center justify-center text-sm font-bold text-white shadow shrink-0">
             {getInitials(name)}
           </div>
-          <div>
-            <p className="text-sm font-bold text-[rgb(var(--text))]">{name}</p>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-[rgb(var(--text))] truncate">
+              {name}
+            </p>
             <p className="text-[10px] font-medium opacity-60 uppercase tracking-widest text-[rgb(var(--text))]">
               {loginAs
                 ? loginAs.toUpperCase()
@@ -135,22 +133,15 @@ const ProfileSheet = ({ onClose }) => {
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-95 transition-transform border"
-            style={{
-              borderColor: "rgb(var(--border))",
-              background: "rgb(var(--surface))",
-              color: "rgb(var(--text))",
-            }}
+            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold active:scale-95 transition-transform border
+              border-[rgb(var(--border))] bg-[rgb(var(--surface))] text-[rgb(var(--text))]"
           >
             Close
           </button>
           <button
             onClick={logout}
-            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold text-white active:scale-95 transition-transform"
-            style={{
-              background:
-                "linear-gradient(135deg, rgb(var(--sidebar)) 0%, rgb(var(--primary)) 100%)",
-            }}
+            className="flex-1 py-3.5 rounded-2xl text-sm font-extrabold text-white active:scale-95 transition-transform
+              bg-gradient-to-br from-[rgb(var(--sidebar))] to-[rgb(var(--primary))]"
           >
             Logout
           </button>

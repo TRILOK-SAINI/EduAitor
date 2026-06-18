@@ -17,7 +17,7 @@ import {
   FaBookOpen,
   FaUserAlt,
   FaUsers,
-  FaLock, // ADDED — lock icon for disabled modules
+  FaLock,
   FaIdCard,
 } from "react-icons/fa";
 import { FiUsers } from "react-icons/fi";
@@ -38,22 +38,46 @@ import { toast } from "react-toastify";
 
 const API = import.meta.env.VITE_API_URL;
 
+const getInitials = (name) => {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+// ── ICON BADGE — small tinted square behind every nav icon ──
+// active = filled solid primary (mirrors the bottom-nav active state in the mockup)
+// locked = muted/greyed out
+// default = soft tinted primary
+const IconBadge = ({ icon, variant = "default" }) => {
+  const styles = {
+    active: "bg-[rgb(var(--primary))] text-white shadow-sm",
+    locked: "bg-[rgba(var(--text-muted),0.15)] text-[rgb(var(--text-muted))]",
+    default: "bg-[rgba(var(--primary),0.08)] text-[rgb(var(--primary))]",
+  };
+  return (
+    <span
+      className={`flex items-center justify-center w-9 h-9 rounded-xl text-[15px] shrink-0 transition-colors duration-200 ${styles[variant]}`}
+    >
+      {icon}
+    </span>
+  );
+};
+
 // ── UPGRADE POPUP — shown when clicking a disabled module ──
-// ADDED: new component
 const UpgradePopup = ({ moduleName, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-999 p-4">
-    <div
-      className="bg-[rgb(var(--surface))] text-[rgb(var(--text))] rounded-2xl
-      shadow-xl w-full max-w-sm p-6 text-center"
-    >
-      <div
-        className="w-12 h-12 bg-orange-100 rounded-full flex items-center
-        justify-center mx-auto mb-4"
-      >
+    <div className="card w-full max-w-sm p-6 text-center">
+      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <FaLock className="text-orange-500" size={20} />
       </div>
-      <h3 className="text-base font-semibold mb-1">Module Not Subscribed</h3>
-      <p className="text-sm mb-5">
+      <h3 className="text-base font-semibold mb-1 text-[rgb(var(--text))]">
+        Module Not Subscribed
+      </h3>
+      <p className="text-sm mb-5 text-[rgb(var(--text-muted))]">
         <span className="font-medium text-[rgb(var(--text))]">
           {moduleName}
         </span>{" "}
@@ -77,22 +101,16 @@ const Sidebar = ({ closeSidebar }) => {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
-  // ADDED: upgrade popup state
   const [upgradePopup, setUpgradePopup] = useState(null); // stores { moduleName }
 
   const role = user?.role;
 
-  // ADDED: subscribed_modules from auth context
-  // super_admin gets all access, others check their school's modules
   const subscribedModules = user?.subscribed_modules || [];
-
-  // ADDED: helper — does this role need module checking?
   const needsModuleCheck = role !== "super_admin";
 
-  // ADDED: check if a module key is accessible
   const hasModule = (moduleKey) => {
-    if (!needsModuleCheck) return true; // super admin always yes
-    if (!moduleKey) return true; // no module key = always visible (Dashboard, Notices etc.)
+    if (!needsModuleCheck) return true;
+    if (!moduleKey) return true;
     return subscribedModules.includes(moduleKey);
   };
 
@@ -112,7 +130,7 @@ const Sidebar = ({ closeSidebar }) => {
 
   const isMobile = window.innerWidth <= 768;
 
-  /* ── SUPER ADMIN MENU ── no module keys needed, full access */
+  /* ── SUPER ADMIN MENU ── */
   const superAdminMenu = [
     ...(isMobile
       ? [{ name: "Menu", icon: <FaTachometerAlt />, path: "/admin/menu" }]
@@ -143,21 +161,17 @@ const Sidebar = ({ closeSidebar }) => {
     },
   ];
 
-  /* ── SCHOOL ADMIN MENU ── UPDATED: module keys added to relevant items */
+  /* ── SCHOOL ADMIN MENU ── */
   const schoolAdminMenu = [
     ...(isMobile
       ? [{ name: "Menu", icon: <FaTachometerAlt />, path: "/school/menu" }]
       : []),
-
-    // no module key — always visible
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/school/dashboard" },
     { name: "Notifications", icon: <FaBell />, path: "/school/notification" },
-
-    // UPDATED: module key added
     {
       name: "Students",
       icon: <FaUserGraduate />,
-      module: "students", // ← ADDED
+      module: "students",
       children: [
         { name: "All Students", path: "/school/students" },
         { name: "Add Student", path: "/school/student-manage" },
@@ -167,7 +181,7 @@ const Sidebar = ({ closeSidebar }) => {
     {
       name: "Teachers",
       icon: <GiTeacher />,
-      module: "teachers", // ← ADDED
+      module: "teachers",
       children: [
         { name: "All Teachers", path: "/school/teachers" },
         { name: "Add Teacher", path: "/school/teacher-manage" },
@@ -176,7 +190,7 @@ const Sidebar = ({ closeSidebar }) => {
     {
       name: "Classes",
       icon: <HiAcademicCap />,
-      module: "classes", // ← ADDED
+      module: "classes",
       children: [
         { name: "Class", path: "/school/class" },
         { name: "Section", path: "/school/section" },
@@ -187,30 +201,30 @@ const Sidebar = ({ closeSidebar }) => {
       name: "Attendance",
       icon: <FaUserAlt />,
       path: "/school/attendance",
-      module: "attendance", // ← ADDED
+      module: "attendance",
     },
     {
       name: "Exam Management",
       icon: <GiOpenBook />,
-      module: "exams", // ← ADDED
+      module: "exams",
       children: [{ name: "Exam Structure", path: "/school/exam-structure" }],
     },
     {
       name: "Syllabus",
       icon: <FaBookDead />,
       path: "/school/syllabus",
-      module: "syllabus", // ← ADDED
+      module: "syllabus",
     },
     {
       name: "Timetable",
       icon: <FaClock />,
       path: "/school/timetable",
-      module: "timetable", // ← ADDED
+      module: "timetable",
     },
     {
       name: "Fee Management",
       icon: <FaWallet />,
-      module: "fees", // ← ADDED
+      module: "fees",
       children: [
         { name: "Fee Structure", path: "/school/fee-structure" },
         { name: "Fee Collection", path: "/school/fee-collection" },
@@ -222,21 +236,21 @@ const Sidebar = ({ closeSidebar }) => {
       name: "Group",
       icon: <FaUserGroup />,
       path: "/school/group",
-      module: "groups", // ← ADDED
+      module: "groups",
     },
     {
       name: "Diary",
       icon: <FaBookOpen />,
       path: "/school/diary",
-      module: "diary", // ← ADDED
+      module: "diary",
     },
-    { name: "Events", icon: <FaCalendar />, path: "/school/event" }, // no module — always visible
-    { name: "Notices", icon: <FaBell />, path: "/school/notice" }, // no module — always visible
-    { name: "Calendar", icon: <FaCalendarAlt />, path: "/school/calendar" }, // no module — always visible
+    { name: "Events", icon: <FaCalendar />, path: "/school/event" },
+    { name: "Notices", icon: <FaBell />, path: "/school/notice" },
+    { name: "Calendar", icon: <FaCalendarAlt />, path: "/school/calendar" },
     {
       name: "Transport Management",
       icon: <FaBusAlt />,
-      module: "transport", // ← ADDED
+      module: "transport",
       children: [
         { name: "Transport", path: "/school/transport" },
         { name: "Route Manage", path: "/school/transport-route" },
@@ -248,36 +262,33 @@ const Sidebar = ({ closeSidebar }) => {
       name: "Library",
       icon: <FaBookJournalWhills />,
       path: "/school/library",
-      module: "library", // ← ADDED
+      module: "library",
     },
     {
       name: "Blogs",
       icon: <FaBookJournalWhills />,
       path: "/school/blogs",
-      module: "blogs", // ← ADDED
+      module: "blogs",
     },
     {
       name: "Staff",
       icon: <FaUsers />,
       path: "/school/staff",
-      module: "staff", // ← must match key in modules.js
+      module: "staff",
     },
     {
       name: "Gate Pass",
       icon: <FaIdCard />,
       path: "/school/gatepass",
-      // module: "gatepass", // ← must match key in modules.js
     },
-     {
-      name:"Messages",
-      icon:<FaBell/>,
-      path:"/school/messages",
-      // module:"messages"
+    {
+      name: "Messages",
+      icon: <FaBell />,
+      path: "/school/messages",
     },
-    
   ];
 
-  /* ── TEACHER ADMIN MENU ── UPDATED: module keys added */
+  /* ── TEACHER ADMIN MENU ── */
   const teacherAdminMenu = [
     ...(isMobile
       ? [{ name: "Menu", icon: <FaTachometerAlt />, path: "/teacher/menu" }]
@@ -292,12 +303,12 @@ const Sidebar = ({ closeSidebar }) => {
       name: "Students",
       icon: <FaUserGraduate />,
       path: "/teacher/students",
-      module: "students", // ← ADDED
+      module: "students",
     },
     {
       name: "Attendance",
       icon: <FaUserAlt />,
-      module: "attendance", // ← ADDED
+      module: "attendance",
       children: [
         { name: "Mark Attendance", path: "/teacher/attendance/mark" },
         { name: "Attendance Report", path: "/teacher/attendance/report" },
@@ -307,18 +318,18 @@ const Sidebar = ({ closeSidebar }) => {
       name: "My Classes",
       icon: <HiAcademicCap />,
       path: "/teacher/class",
-      module: "classes", // ← ADDED
+      module: "classes",
     },
     {
       name: "Syllabus",
       icon: <FaBookDead />,
       path: "/teacher/syllabus",
-      module: "syllabus", // ← ADDED
+      module: "syllabus",
     },
     {
       name: "Assignment",
       icon: <GiSchoolBag />,
-      module: "assignments", // ← ADDED
+      module: "assignments",
       children: [
         { name: "My Assignments", path: "/teacher/assignment" },
         { name: "Assignment Result", path: "/teacher/assignment/result" },
@@ -327,7 +338,7 @@ const Sidebar = ({ closeSidebar }) => {
     {
       name: "Exams",
       icon: <GiOpenBook />,
-      module: "exams", // ← ADDED
+      module: "exams",
       children: [
         { name: "Marks Entry", path: "/teacher/exam" },
         { name: "Exam Report", path: "/teacher/exam-report" },
@@ -361,20 +372,19 @@ const Sidebar = ({ closeSidebar }) => {
       module: "blogs",
     },
     {
-      name:"Gate Pass",
-      icon:<FaIdCard />,
-      path:"/teacher/gatepass",
-      module:"gatepass",
+      name: "Gate Pass",
+      icon: <FaIdCard />,
+      path: "/teacher/gatepass",
+      module: "gatepass",
     },
     {
-      name:"Messages",
-      icon:<FaBell/>,
-      path:"/teacher/messages",
-      // module:"messages"
-    }
+      name: "Messages",
+      icon: <FaBell />,
+      path: "/teacher/messages",
+    },
   ];
 
-  /* ── PARENT MENU (loginAs === "parent") ── */
+  /* ── PARENT MENU ── */
   const parentMenu = [
     ...(isMobile
       ? [{ name: "Menu", icon: <FaTachometerAlt />, path: "/parent/menu" }]
@@ -409,20 +419,19 @@ const Sidebar = ({ closeSidebar }) => {
       module: "blogs",
     },
     {
-      name:"Gate Pass",
-      icon:<FaIdCard />,
-      path:"/parent/gatepass",
-      module:"gatepass",
+      name: "Gate Pass",
+      icon: <FaIdCard />,
+      path: "/parent/gatepass",
+      module: "gatepass",
     },
-     {
-      name:"Messages",
-      icon:<FaBell/>,
-      path:"/parent/messages",
-      // module:"messages"
-    }
+    {
+      name: "Messages",
+      icon: <FaBell />,
+      path: "/parent/messages",
+    },
   ];
 
-  /* ── STUDENT MENU (loginAs === "student") ── */
+  /* ── STUDENT MENU ── */
   const studentMenu = [
     ...(isMobile
       ? [{ name: "Menu", icon: <FaTachometerAlt />, path: "/student/menu" }]
@@ -487,24 +496,19 @@ const Sidebar = ({ closeSidebar }) => {
       path: "/student/blogs",
       module: "blogs",
     },
-     {
-      name:"Messages",
-      icon:<FaBell/>,
-      path:"/student/messages",
-      // module:"messages"
-    }
+    {
+      name: "Messages",
+      icon: <FaBell />,
+      path: "/student/messages",
+    },
   ];
 
   const staffAdminMenu = [
     ...(isMobile
       ? [{ name: "Menu", icon: <FaTachometerAlt />, path: "/staff/menu" }]
       : []),
-
-    // always visible — no module key
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/staff/dashboard" },
     { name: "Notifications", icon: <FaBell />, path: "/staff/notification" },
-
-    // module gated — only shown if in staff permissions
     {
       name: "Students",
       icon: <FaUserGraduate />,
@@ -567,8 +571,6 @@ const Sidebar = ({ closeSidebar }) => {
       module: "groups",
     },
     { name: "Staff", icon: <FiUsers />, path: "/staff/staff", module: "staff" },
-
-    // always visible
     { name: "Notices", icon: <FaBell />, path: "/staff/notice" },
     { name: "Events", icon: <FaCalendar />, path: "/staff/event" },
     { name: "Calendar", icon: <FaCalendarAlt />, path: "/staff/calendar" },
@@ -580,26 +582,21 @@ const Sidebar = ({ closeSidebar }) => {
   else if (role === "teacher_admin") menu = teacherAdminMenu;
   else if (role === "student_admin") {
     menu = user?.loginAs === "student" ? studentMenu : parentMenu;
-  } 
-  else if (role === "staff_admin") {
-  menu = staffAdminMenu.filter(item => 
-    !item.module || user?.permissions?.includes(item.module)
-  );
-}
+  } else if (role === "staff_admin") {
+    menu = staffAdminMenu.filter(
+      (item) => !item.module || user?.permissions?.includes(item.module),
+    );
+  }
 
   const toggleMenu = (name) => {
     setOpenMenu(openMenu === name ? null : name);
   };
 
-  // ADDED: handle click on any menu item (parent or leaf)
-  // if module not subscribed → show popup instead of navigating
   const handleItemClick = (item, childPath = null) => {
     if (!hasModule(item.module)) {
-      // blocked — show upgrade popup
       setUpgradePopup({ moduleName: item.name });
       return;
     }
-    // allowed
     if (childPath) {
       navigate(childPath);
       closeSidebar && closeSidebar();
@@ -607,26 +604,21 @@ const Sidebar = ({ closeSidebar }) => {
       navigate(item.path);
       closeSidebar && closeSidebar();
     } else {
-      // it's a parent with children — toggle dropdown
       toggleMenu(item.name);
     }
   };
 
-  // REPLACE your current finalMenu with this:
   const finalMenu = (() => {
-    // super_admin — show everything, no filter
     if (role === "super_admin") return menu;
-
-    // school_admin, teacher_admin — show all, lock handles disabled
     if (role === "school_admin" || role === "teacher_admin") return menu;
-
-    // student_admin, staff_admin — hide items they can't access
     return menu.filter((item) => !item.module || hasModule(item.module));
   })();
 
+  const displayName = user?.name || user?.school_name || "User";
+  const displayRole = user?.loginAs || role?.replace("_", " ") || "User";
+
   return (
     <>
-      {/* ADDED: upgrade popup rendered outside aside so it overlays everything */}
       {upgradePopup && (
         <UpgradePopup
           moduleName={upgradePopup.moduleName}
@@ -634,7 +626,7 @@ const Sidebar = ({ closeSidebar }) => {
         />
       )}
 
-      <aside className="h-full w-56 bg-[rgb(var(--sidebar))] border-r border-[rgb(var(--border))] flex flex-col">
+      <aside className="h-full w-full bg-[rgb(var(--sidebar))] border-r border-[rgb(var(--border))] flex flex-col shadow-sm">
         {/* MOBILE HEADER */}
         <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-[rgb(var(--border))]">
           <h2 className="font-semibold text-[rgb(var(--sidebar-text))]">
@@ -648,62 +640,97 @@ const Sidebar = ({ closeSidebar }) => {
           </button>
         </div>
 
+        {/* PROFILE SNAPSHOT */}
+        {isMobile && (
+          <div className="px-3 pt-4 pb-2">
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-[rgba(var(--primary),0.06)]">
+              <div className="w-10 h-10 rounded-full bg-[rgb(var(--primary))] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                {getInitials(displayName)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[rgb(var(--sidebar-text))] truncate">
+                  {displayName}
+                </p>
+                <p className="text-[11px] text-[rgb(var(--text-muted))] capitalize truncate">
+                  {displayRole}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* MENU */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
+        <div className="flex-1 overflow-y-auto px-2 py-2">
           {finalMenu.map((item, index) => {
-            const isSubscribed = hasModule(item.module); // ADDED
+            const isSubscribed = hasModule(item.module);
             const isParentActive = item.children?.some(
               (c) => location.pathname === c.path,
             );
+            const variant = !isSubscribed
+              ? "locked"
+              : isParentActive
+                ? "active"
+                : "default";
 
             if (item.children) {
               const isOpen = openMenu === item.name;
 
               return (
                 <div key={index}>
-                  {/* UPDATED: onClick now uses handleItemClick */}
                   <div
                     onClick={() => handleItemClick(item)}
-                    className={`flex items-center justify-between px-4 py-2.5 cursor-pointer
-                      transition text-sm border-l-4
+                    className={`mx-1 mb-1 px-3 py-2.5 rounded-2xl flex items-center justify-between gap-2 transition-all duration-200
                       ${
                         !isSubscribed
-                          ? // ADDED: disabled style for unsubscribed modules
-                            "opacity-50 border-transparent text-[rgb(var(--sidebar-text))] cursor-not-allowed"
+                          ? "opacity-50 cursor-not-allowed"
                           : isParentActive
-                            ? "bg-[rgba(var(--primary),0.15)] text-[rgb(var(--sidebar-active))] border-[rgb(var(--primary))]"
-                            : "text-[rgb(var(--sidebar-text))] border-transparent hover:bg-[rgba(var(--primary),0.08)] hover:text-[rgb(var(--sidebar-active))]"
+                            ? "bg-[rgba(var(--primary),0.08)] cursor-pointer"
+                            : "cursor-pointer hover:bg-[rgba(var(--primary),0.06)]"
                       }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span>{item.icon}</span>
-                      <span className="font-medium">{item.name}</span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <IconBadge icon={item.icon} variant={variant} />
+                      <span
+                        className={`font-medium text-sm truncate ${
+                          isParentActive && isSubscribed
+                            ? "text-[rgb(var(--primary))]"
+                            : "text-[rgb(var(--sidebar-text))]"
+                        }`}
+                      >
+                        {item.name}
+                      </span>
                     </div>
-                    {/* ADDED: show lock icon if not subscribed, else chevron */}
                     {!isSubscribed ? (
-                      <FaLock size={10} className="text-gray-400" />
+                      <FaLock
+                        size={10}
+                        className="text-[rgb(var(--text-muted))] shrink-0"
+                      />
                     ) : isOpen ? (
-                      <FaChevronDown size={10} />
+                      <FaChevronDown
+                        size={10}
+                        className="text-[rgb(var(--text-muted))] shrink-0"
+                      />
                     ) : (
-                      <FaChevronRight size={10} />
+                      <FaChevronRight
+                        size={10}
+                        className="text-[rgb(var(--text-muted))] shrink-0"
+                      />
                     )}
                   </div>
 
-                  {/* children only shown if subscribed AND open */}
                   {isOpen && isSubscribed && (
-                    <div className="bg-black/10">
+                    <div className="ml-6 my-1 border-l border-[rgb(var(--border))]">
                       {item.children.map((child, i) => {
                         const isActive = location.pathname === child.path;
                         return (
                           <div
                             key={i}
-                            // UPDATED: onClick uses handleItemClick with child path
                             onClick={() => handleItemClick(item, child.path)}
-                            className={`pl-11 pr-4 py-2 text-sm cursor-pointer transition
+                            className={`ml-3 mr-2 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-all
                               ${
                                 isActive
-                                  ? "text-[rgb(var(--sidebar-active))] font-semibold"
-                                  : "text-[rgb(var(--sidebar-text))] hover:text-[rgb(var(--sidebar-active))]"
+                                  ? "text-[rgb(var(--primary))] font-semibold bg-[rgba(var(--primary),0.08)]"
+                                  : "text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text))] hover:bg-[rgba(var(--primary),0.05)]"
                               }`}
                           >
                             {child.name}
@@ -716,48 +743,58 @@ const Sidebar = ({ closeSidebar }) => {
               );
             }
 
-            // leaf item (no children)
+            // leaf item
             const isActive = location.pathname === item.path;
+            const leafVariant = !isSubscribed
+              ? "locked"
+              : isActive
+                ? "active"
+                : "default";
 
             return (
               <div
                 key={index}
-                // UPDATED: onClick uses handleItemClick
                 onClick={() => handleItemClick(item)}
-                className={`flex items-center justify-between px-4 py-2.5 cursor-pointer
-                  text-sm border-l-4 transition
+                className={`mx-1 mb-1 px-3 py-2.5 rounded-2xl flex items-center justify-between gap-2 transition-all duration-200
                   ${
                     !isSubscribed
-                      ? // ADDED: disabled style
-                        "opacity-50 border-transparent text-[rgb(var(--sidebar-text))] cursor-not-allowed"
+                      ? "opacity-50 cursor-not-allowed"
                       : isActive
-                        ? "bg-[rgba(var(--primary),0.15)] text-[rgb(var(--sidebar-active))] border-[rgb(var(--primary))]"
-                        : "text-[rgb(var(--sidebar-text))] border-transparent hover:bg-[rgba(var(--primary),0.08)] hover:text-[rgb(var(--sidebar-active))]"
+                        ? "bg-[rgba(var(--primary),0.08)] cursor-pointer"
+                        : "cursor-pointer hover:bg-[rgba(var(--primary),0.06)]"
                   }`}
               >
-                <div className="flex items-center gap-3">
-                  {item.icon}
-                  <span className="font-medium">{item.name}</span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <IconBadge icon={item.icon} variant={leafVariant} />
+                  <span
+                    className={`font-medium text-sm truncate ${
+                      isActive && isSubscribed
+                        ? "text-[rgb(var(--primary))]"
+                        : "text-[rgb(var(--sidebar-text))]"
+                    }`}
+                  >
+                    {item.name}
+                  </span>
                 </div>
-                {/* ADDED: lock icon on leaf items too */}
                 {!isSubscribed && (
-                  <FaLock size={10} className="text-gray-400" />
+                  <FaLock
+                    size={10}
+                    className="text-[rgb(var(--text-muted))] shrink-0"
+                  />
                 )}
               </div>
             );
           })}
         </div>
 
-        {/* LOGOUT — unchanged */}
-        <div className="p-3 border-t border-[rgb(var(--border))]">
+        {/* LOGOUT */}
+        <div className="p-3 border-t border-[rgb(var(--border))] bg-[rgb(var(--sidebar))]">
           <button
             onClick={logout}
-            className="flex items-center gap-3 w-full px-4 py-2 rounded-lg
-              text-[rgb(var(--sidebar-text))] hover:bg-red-500/10 hover:text-red-400
-              transition text-sm"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl text-[rgb(var(--text-muted))] hover:bg-red-500/10 hover:text-red-500 transition-all"
           >
-            <FaSignOutAlt />
-            <span className="font-medium">Logout</span>
+            <IconBadge icon={<FaSignOutAlt />} variant="default" />
+            <span className="font-medium text-sm">Logout</span>
           </button>
         </div>
       </aside>
