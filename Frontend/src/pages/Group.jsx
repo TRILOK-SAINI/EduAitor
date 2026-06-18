@@ -27,11 +27,11 @@ import {
   MdOutlineGroups,
   MdAnnouncement,
   MdEventNote,
-  MdSubject,
   MdOutlineClass,
   MdAdminPanelSettings,
   MdPin,
   MdGroupAdd,
+  MdCampaign,
 } from "react-icons/md";
 import {
   BsThreeDotsVertical,
@@ -64,13 +64,6 @@ const GROUP_TYPE_META = {
     soft: "bg-violet-50",
     text: "text-violet-600",
   },
-  subject: {
-    label: "Subject",
-    Icon: MdSubject,
-    bg: "bg-sky-500",
-    soft: "bg-sky-50",
-    text: "text-sky-600",
-  },
   teacher: {
     label: "Teacher",
     Icon: FiUsers,
@@ -98,6 +91,13 @@ const GROUP_TYPE_META = {
     bg: "bg-slate-500",
     soft: "bg-slate-50",
     text: "text-slate-600",
+  },
+  broadcast: {
+    label: "Broadcast",
+    Icon: MdCampaign,
+    bg: "bg-fuchsia-500",
+    soft: "bg-fuchsia-50",
+    text: "text-fuchsia-600",
   },
 };
 
@@ -244,13 +244,92 @@ function CreateGroupModal({ onClose, onCreated }) {
     type: "custom",
     description: "",
   });
+  const [audience, setAudience] = useState({
+    allUsers: false,
+    allStudents: false,
+    allTeachers: false,
+    classIds: [],
+  });
+  const [permissions, setPermissions] = useState({
+    canPost: ["admin"],
+  });
+  const [classes, setClasses] = useState([]);
   const [busy, setBusy] = useState(false);
+
+  const isBroadcast = form.type === "broadcast";
+  const isRestrictedGroup = ["broadcast", "announcement"].includes(form.type);
+
+  // Classes are only needed once the admin picks the Broadcast type
+  useEffect(() => {
+    if (!isBroadcast || classes.length) return;
+    api
+      .get("/classes/flat")
+      .then(({ data }) => {
+        if (data.success) setClasses(data.classes);
+      })
+      .catch(() => {});
+  }, [isBroadcast, classes.length]);
+
+  const toggleAudienceFlag = (key) =>
+    setAudience((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      // "All Users" is a shortcut for both — keep the individual boxes
+      // visually in sync so the UI doesn't look out of step.
+      if (key === "allUsers" && next.allUsers) {
+        next.allStudents = false;
+        next.allTeachers = false;
+      }
+      return next;
+    });
+
+  const toggleAudienceClass = (classId) =>
+    setAudience((prev) => ({
+      ...prev,
+      classIds: prev.classIds.includes(classId)
+        ? prev.classIds.filter((id) => id !== classId)
+        : [...prev.classIds, classId],
+    }));
+
+  const togglePermissionRole = (role) =>
+    setPermissions((prev) => ({
+      ...prev,
+      canPost: prev.canPost.includes(role)
+        ? prev.canPost.filter((r) => r !== role)
+        : [...prev.canPost, role],
+    }));
 
   const submit = async () => {
     if (!form.name.trim()) return toast.error("Group name required");
+
+    if (
+      isBroadcast &&
+      !audience.allUsers &&
+      !audience.allStudents &&
+      !audience.allTeachers
+    ) {
+      return toast.error("Pick at least one audience for the broadcast");
+    }
+
+    if (isRestrictedGroup && permissions.canPost.length === 0) {
+      return toast.error("Pick at least one role that can post to this group");
+    }
+
     setBusy(true);
     try {
-      const { data } = await api.post("/groups", form);
+      const payload = { ...form };
+      if (isBroadcast) {
+        payload.audience = {
+          ...audience,
+          classIds: audience.classIds.map((id) => id.split("_")[0]),
+        };
+      }
+      if (isRestrictedGroup) {
+        payload.permissions = {
+          canPost: permissions.canPost,
+        };
+      }
+
+      const { data } = await api.post("/groups", payload);
       if (data.success) {
         toast.success("Group created!");
         onCreated(data.data);
@@ -292,7 +371,129 @@ function CreateGroupModal({ onClose, onCreated }) {
               </option>
             ))}
           </select>
+          {isBroadcast && (
+            <p className="text-[11px] text-gray-400 mt-0.5">
+              Broadcast groups are admin-only to post in — pick who should
+              receive them below.
+            </p>
+          )}
         </div>
+
+        {isBroadcast && (
+          <div className="flex flex-col gap-2.5 p-3 bg-fuchsia-50 border border-fuchsia-100 rounded-xl">
+            <span className="text-xs font-semibold text-fuchsia-700 uppercase tracking-wide">
+              Audience
+            </span>
+
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={audience.allUsers}
+                onChange={() => toggleAudienceFlag("allUsers")}
+                className="w-4 h-4 accent-fuchsia-600"
+              />
+              <span className="text-sm text-gray-700 font-medium">
+                Everyone (all students + all teachers)
+              </span>
+            </label>
+
+            {!audience.allUsers && (
+              <>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={audience.allStudents}
+                    onChange={() => toggleAudienceFlag("allStudents")}
+                    className="w-4 h-4 accent-fuchsia-600"
+                  />
+                  <span className="text-sm text-gray-700">
+                    All students
+                    {audience.classIds.length > 0 ? " in selected classes" : ""}
+                  </span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={audience.allTeachers}
+                    onChange={() => toggleAudienceFlag("allTeachers")}
+                    className="w-4 h-4 accent-fuchsia-600"
+                  />
+                  <span className="text-sm text-gray-700">
+                    All teachers
+                    {audience.classIds.length > 0
+                      ? " assigned to selected classes"
+                      : ""}
+                  </span>
+                </label>
+              </>
+            )}
+
+            {!audience.allUsers && (
+              <div className="flex flex-col gap-1.5 pt-1 border-t border-fuchsia-100">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                  Limit to specific classes (optional)
+                </span>
+                <div className="max-h-32 overflow-y-auto flex flex-col gap-1 pr-1">
+                  {classes.length === 0 ? (
+                    <span className="text-[11px] text-gray-400">
+                      Loading classes…
+                    </span>
+                  ) : (
+                    classes.map((c) => (
+                      <label
+                        key={c._id}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={audience.classIds.includes(c._id)}
+                          onChange={() => toggleAudienceClass(c._id)}
+                          className="w-3.5 h-3.5 accent-fuchsia-600"
+                        />
+                        <span className="text-xs text-gray-600">
+                          {c.displayName}
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {isRestrictedGroup && (
+              <div className="flex flex-col gap-2.5 p-3 bg-fuchsia-50 border border-fuchsia-100 rounded-xl">
+                <span className="text-xs font-semibold text-fuchsia-700 uppercase tracking-wide">
+                  Who can post?
+                </span>
+                <p className="text-[11px] text-gray-500">
+                  Choose which roles are allowed to send messages in this group.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    ["admin", "School Admin"],
+                    ["teacher", "Teacher"],
+                    ["student", "Student"],
+                    ["staff", "Staff"],
+                  ].map(([role, label]) => (
+                    <label
+                      key={role}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={permissions.canPost.includes(role)}
+                        onChange={() => togglePermissionRole(role)}
+                        className="w-4 h-4 accent-fuchsia-600"
+                      />
+                      <span className="text-xs text-gray-700">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Description
@@ -323,6 +524,173 @@ function CreateGroupModal({ onClose, onCreated }) {
               <FiPlus size={13} />
             )}
             {busy ? "Creating…" : "Create"}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── EDIT GROUP MODAL (name / description / permissions) ───────────────────
+function EditGroupModal({ group, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    name: group.name || "",
+    description: group.description || "",
+  });
+  const [permissions, setPermissions] = useState({
+    canPost: group.permissions?.canPost || [],
+    canComment: group.permissions?.canComment || [],
+  });
+  const [busy, setBusy] = useState(false);
+
+  const togglePermission = (key, role) =>
+    setPermissions((prev) => ({
+      ...prev,
+      [key]: prev[key].includes(role)
+        ? prev[key].filter((r) => r !== role)
+        : [...prev[key], role],
+    }));
+
+  const save = async () => {
+    if (!form.name.trim()) return toast.error("Group name required");
+    setBusy(true);
+    try {
+      const payload = {
+        name: form.name,
+        description: form.description,
+        permissions: {
+          canPost: permissions.canPost,
+          canComment: permissions.canComment,
+        },
+      };
+      const { data } = await api.put(`/groups/${group._id}`, payload);
+      if (data.success) {
+        toast.success("Group updated");
+        onSaved(data.data);
+        onClose();
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.message || "Failed to update group");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal onClose={onClose} title="Edit Group">
+      <div className="p-5 flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Group Name *
+          </label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className={inp}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Description
+          </label>
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            rows={3}
+            className={`${inp} resize-none`}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2.5 p-3 bg-gray-50 border rounded-xl">
+          <span className="text-xs font-semibold uppercase">Who can post</span>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              ["admin", "School Admin"],
+              ["teacher", "Teacher"],
+              ["student", "Student"],
+              ["staff", "Staff"],
+            ].map(([r, label]) => (
+              <label key={r} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={permissions.canPost.includes(r)}
+                  onChange={() => togglePermission("canPost", r)}
+                  className="w-4 h-4"
+                />
+                <span className="text-xs">{label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            disabled={busy}
+            className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl"
+          >
+            {busy ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Delete GROUP MODAL ─────────────────────────────────────────────────────
+function DeleteGroupModal({ group, onClose, onDeleted }) {
+  const [loading, setLoading] = useState(false);
+
+  const deleteGroup = async () => {
+    try {
+      setLoading(true);
+
+      const { data } = await api.delete(`/groups/${group._id}`);
+
+      if (data.success) {
+        toast.success("Group deleted");
+
+        if (onDeleted) {
+          onDeleted(group._id);
+        }
+
+        onClose();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Delete failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal onClose={onClose} title="Delete Group">
+      <div className="p-5">
+        <p className="text-sm text-gray-600 mb-5">
+          Are you sure you want to delete
+          <strong> {group.name}</strong> ?
+        </p>
+
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-100 rounded-xl"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={deleteGroup}
+            disabled={loading}
+            className="px-4 py-2 bg-red-600 text-white rounded-xl"
+          >
+            {loading ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>
@@ -699,14 +1067,45 @@ function MembersPanel({ group, isAdmin, onRemove, onAdd, userLookup }) {
                 </div>
               </div>
               {isAdmin && (
-                <button
-                  onClick={() =>
-                    onRemove(m.userId?._id?.toString() || m.userId?.toString())
-                  }
-                  className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                >
-                  <FiUserMinus size={13} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* <select
+                    value={m.role || "member"}
+                    onChange={async (e) => {
+                      const newRole = e.target.value;
+                      try {
+                        await api.patch(`/groups/${group._id}/members/role`, {
+                          userId:
+                            m.userId?._id?.toString() || m.userId?.toString(),
+                          role: newRole,
+                        });
+                        toast.success("Role updated");
+                        // naive refresh: reload group data if provided via prop callbacks
+                        window.location.reload();
+                      } catch (err) {
+                        toast.error(
+                          err.response?.data?.message ||
+                            "Failed to update role",
+                        );
+                      }
+                    }}
+                    className="text-xs bg-white border rounded px-2 py-1"
+                  >
+                    <option value="member">Member</option>
+                    <option value="moderator">Moderator</option>
+                    <option value="admin">Admin</option>
+                  </select> */}
+
+                  <button
+                    onClick={() =>
+                      onRemove(
+                        m.userId?._id?.toString() || m.userId?.toString(),
+                      )
+                    }
+                    className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                  >
+                    <FiUserMinus size={13} />
+                  </button>
+                </div>
               )}
             </div>
           );
@@ -1098,7 +1497,12 @@ function ChatWindow({
   const [showMembers, setShowMembers] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [showEditGroupModal, setShowEditGroupModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("Active");
+
   const fileRef = useRef(null);
   const bottomRef = useRef(null);
   const menuRef = useRef(null);
@@ -1107,10 +1511,24 @@ function ChatWindow({
   const isAdmin = currentUser?.role === "school_admin";
   const isTeacher = currentUser?.role === "teacher_admin";
   const isStudent = currentUser?.role === "student_admin";
+  const isStaff = currentUser?.role === "staff_admin";
   const isParent = currentUser?.role === "parent_admin";
 
-  const canSend =
-    group.type === "announcement" ? isAdmin : isAdmin || isTeacher;
+  const currentRoleType = isAdmin
+    ? "admin"
+    : isTeacher
+      ? "teacher"
+      : isStaff
+        ? "staff"
+        : isStudent || isParent
+          ? "student"
+          : null;
+
+  const canSend = currentRoleType
+    ? (group.permissions?.canPost || ["teacher", "admin"]).includes(
+        currentRoleType,
+      )
+    : false;
 
   const meta = GROUP_TYPE_META[group.type] || GROUP_TYPE_META.custom;
   const { Icon } = meta;
@@ -1320,7 +1738,7 @@ function ChatWindow({
             <p className="text-sm font-bold  truncate">{group.name}</p>
             <p className="text-xstruncate flex items-center gap-1.5">
               <span>{group.members?.length || 0} members</span>
-              {group.type === "announcement" && (
+              {["announcement", "broadcast"].includes(group.type) && (
                 <span className="inline-flex items-center gap-0.5 text-amber-500 font-semibold">
                   <FiLock size={9} /> Admin only
                 </span>
@@ -1355,6 +1773,29 @@ function ChatWindow({
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium "
                   >
                     <FiUserPlus size={13} /> Add Member
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setShowEditGroupModal(true);
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium"
+                  >
+                    <FiEdit size={13} />
+                    Edit Group
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowDeleteModal(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-rose-600"
+                  >
+                    <FiTrash2 size={13} /> Delete Group
                   </button>
                 )}
               </div>
@@ -1541,8 +1982,8 @@ function ChatWindow({
           <div className="shrink-0 bg-gray-50 border-t border-gray-100 px-4 py-3.5 flex items-center justify-center gap-2 text-gray-400">
             <FiLock size={13} />
             <span className="text-xs font-medium">
-              {group.type === "announcement"
-                ? "Only admins can send in announcement groups"
+              {["announcement", "broadcast"].includes(group.type)
+                ? "Only admins can send in announcement / broadcast groups"
                 : "You don't have permission to send messages"}
             </span>
           </div>
@@ -1572,6 +2013,33 @@ function ChatWindow({
           group={group}
           onClose={() => setShowAddMember(false)}
           onAdded={(updated) => onGroupUpdated(updated)}
+        />
+      )}
+
+      {showEditGroupModal && (
+        <EditGroupModal
+          group={group}
+          onClose={() => setShowEditGroupModal(false)}
+          onSaved={(updatedGroup) => {
+            onGroupUpdated(updatedGroup);
+            setShowEditGroupModal(false);
+          }}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteGroupModal
+          group={group}
+          onClose={() => setShowDeleteModal(false)}
+          onDeleted={() => {
+            setShowDeleteModal(false);
+
+            if (onBack) {
+              onBack();
+            }
+
+            window.location.reload();
+          }}
         />
       )}
     </div>
@@ -1642,6 +2110,44 @@ function TypeChip({
   );
 }
 
+// ─── Confirmation Model ──────────────────────────────────────────────────────────
+function ConfirmModal({
+  title,
+  message,
+  confirmText,
+  danger = false,
+  onClose,
+  onConfirm,
+}) {
+  return (
+    <Modal onClose={onClose} title={title}>
+      <div className="p-5">
+        <p className="text-sm text-gray-600 mb-5">{message}</p>
+
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-gray-100"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            className={`px-4 py-2 rounded-xl text-white ${
+              danger
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 // ─── ROOT COMPONENT ───────────────────────────────────────────────────────────
 export default function Groups() {
   const [groups, setGroups] = useState([]);
@@ -1652,6 +2158,8 @@ export default function Groups() {
   const [showCreate, setShowCreate] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [mobileView, setMobileView] = useState("list");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
   /**
    * userLookup: { [mongoId]: { name, fullName, firstName, lastName, photo, userType } }
@@ -1819,7 +2327,7 @@ export default function Groups() {
             </div>
 
             <div
-              className="flex gap-1.5 overflow-x-auto pb-1"
+              className="flex flex-wrap gap-2"
               style={{ scrollbarWidth: "none" }}
             >
               <TypeChip
@@ -1918,6 +2426,18 @@ export default function Groups() {
           )}
         </div>
       </div>
+
+      {showEditModal && selectedGroup && (
+        <EditGroupModal
+          group={selectedGroup}
+          onClose={() => setShowEditModal(false)}
+          onSaved={(updated) => {
+            setGroups((prev) =>
+              prev.map((g) => (g._id === updated._id ? updated : g)),
+            );
+          }}
+        />
+      )}
 
       {/* Only school_admin can open this modal */}
       {showCreate && isAdmin && (

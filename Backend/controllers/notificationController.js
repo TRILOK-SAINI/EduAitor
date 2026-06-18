@@ -363,6 +363,7 @@
 
 import Notification from "../models/notification.js";
 import Student from "../models/student.js";
+import {uploadToCloudinary} from "../utils/uploadToCloudinary.js"
 
 // ─── HELPER: build the per-role target match using $elemMatch ─────────────────
 // $elemMatch ensures schoolId AND type/role come from the SAME target subdocument.
@@ -437,6 +438,8 @@ export const createNotificationHelper = async ({
   createdBy = null, schoolId = null,
   startingDate = null, endingDate = null,
   targets = [],
+    status = 'sent',        // ← explicit, defaults to sent for auto-generated notifications
+  scheduledAt = null,
 }) => {
   // Always inject schoolId into every target for correct scoping
   const resolvedTargets = targets.map((t) => ({
@@ -449,6 +452,9 @@ export const createNotificationHelper = async ({
     createdBy,
     targets: resolvedTargets,
     startingDate, endingDate,
+    status,
+    scheduledAt,
+    schoolId:req.user.school_id,
   });
 
   await notification.save();
@@ -458,15 +464,50 @@ export const createNotificationHelper = async ({
 // ─── CREATE: school admin manually sends a notification ──────────────────────
 export const createNotification = async (req, res) => {
   try {
-    const { title, message, notificationType, target, startingDate, endingDate } = req.body;
-    const schoolId = req.user.school_id; // undefined for super_admin — intentional
+    const {
+      title, message, notificationType,
+      target, startingDate, endingDate,
+      scheduledAt,
+      status: requestedStatus,   // ← read it from body
+    } = req.body;
 
-    // Normalize to array and inject schoolId into every target subdoc
-    const rawTargets = Array.isArray(target) ? target : [target || { type: 'all' }];
-    const targets = rawTargets.map((t) => ({
+    const schoolId  = req.user.school_id;
+    const rawTargets = Array.isArray(target) ? target : [JSON.parse(target) || { type: 'all' }];
+    const targets    = rawTargets.map((t) => ({
       ...t,
       ...(schoolId ? { schoolId } : {}),
     }));
+
+    const attachments = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+
+       const isPdf = file.mimetype === "application/pdf";
+const uploaded = await uploadToCloudinary(
+  file,
+  'notifications/pdfs',
+  isPdf ? "image" : "auto"
+);
+        attachments.push({
+          url: uploaded.url,
+          public_id: uploaded.public_id,
+          name: file.originalname,
+          type: file.mimetype,
+        });
+      }
+    }
+
+    // ── Determine final status ──────────────────────────────────────
+    let status = 'sent';
+    let scheduleDate = null;
+
+  if (scheduledAt) {
+      const parsed = new Date(scheduledAt);
+      if (parsed > new Date()) {
+        status       = 'scheduled';
+        scheduleDate = parsed;
+      }
+    }
 
     const notification = new Notification({
       title,
@@ -474,15 +515,24 @@ export const createNotification = async (req, res) => {
       notificationType: notificationType || 'general',
       startingDate,
       endingDate,
+      attachments,
       createdBy: req.user._id,
       targets,
+      status,
+      scheduledAt: scheduleDate,
     });
 
     await notification.save();
-    res.status(201).json({ message: "Notification sent!", notification });
+
+    const messages = {
+      scheduled: `Notification scheduled for ${scheduleDate?.toLocaleString()}`,
+      sent:      'Notification sent!',
+    };
+
+    res.status(201).json({ message: messages[status], notification });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to create notification" });
+    res.status(500).json({ error: 'Failed to create notification' });
   }
 };
 
@@ -496,6 +546,7 @@ export const getTopbarNotifications = async (req, res) => {
     const notifications = await Notification.find({
       ...targetQuery,
       dismissedBy: { $ne: user._id || req.user.id }, // hide dismissed ones from topbar only
+      status:"sent",
     })
       .sort({ createdAt: -1 })
       .limit(50);
@@ -514,7 +565,10 @@ export const getAllNotifications = async (req, res) => {
     const user = req.user;
     const targetQuery = await buildTargetQuery(user);
 
-    const notifications = await Notification.find(targetQuery)
+    const notifications = await Notification.find({
+      ...targetQuery,
+      status: 'sent',
+    })
       .sort({ createdAt: -1 })
       .limit(100);
 
@@ -524,7 +578,6 @@ export const getAllNotifications = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch notifications" });
   }
 };
-
 // ─── MARK ONE AS READ ────────────────────────────────────────────────────────
 export const markAsRead = async (req, res) => {
   try {

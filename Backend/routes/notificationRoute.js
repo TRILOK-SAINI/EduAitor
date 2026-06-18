@@ -10,6 +10,7 @@ import {
   markAllAsRead,
   dismissAllNotifications,
 } from "../controllers/notificationController.js";
+import upload from "../middlewares/upload.js"
 
 // ── Topbar dropdown — excludes dismissedBy ────────────────────────────────────
 router.get("/topbar", authMiddleware, getTopbarNotifications);
@@ -18,7 +19,7 @@ router.get("/topbar", authMiddleware, getTopbarNotifications);
 router.get("/", authMiddleware, getAllNotifications);
 
 // ── Create (school admin) ─────────────────────────────────────────────────────
-router.post("/", authMiddleware, createNotification);
+router.post("/", authMiddleware,  upload.array('pdfs', 5),createNotification);
 
 // ── Read actions ─────────────────────────────────────────────────────────────
 router.patch("/read-all", authMiddleware, markAllAsRead);

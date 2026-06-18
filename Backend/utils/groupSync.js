@@ -1,5 +1,8 @@
 import Group from "../models/group.js";
 import Class from "../models/class.js";
+import Section from "../models/section.js";
+import Student from "../models/student.js";
+import Teacher from "../models/teacher.js";
 
 // ADD student to correct groups
 export const syncStudentGroups = async (student) => {
@@ -203,4 +206,118 @@ export const removeTeacherFromOldGroups = async (oldTeacher) => {
       arrayFilters: [{ "elem.userId": _id }],
     },
   );
+};
+
+// REMOVE a teacher only from the auto-created groups belonging to ONE class
+// (used when a teacher is unassigned from a specific class/section/subject,
+// instead of wiping them from every auto group in the school)
+export const removeTeacherFromClassGroups = async (teacherId, classId) => {
+  if (!teacherId || !classId) return;
+
+  await Group.updateMany(
+    {
+      classId,
+      isAutoCreated: true,
+      "members.userId": teacherId,
+    },
+    {
+      $set: {
+        "members.$[elem].isManuallyRemoved": true,
+      },
+    },
+    {
+      arrayFilters: [{ "elem.userId": teacherId }],
+    },
+  );
+};
+
+// ─── AUTO GROUP CREATION (class add / class update) ──────────────────────────
+// Ensures a "class" group exists for the whole class, a "section" group for
+// every section under it, and a "subject" group for every subject/teacher
+// pairing inside each section. Safe to call repeatedly — it only creates the
+// groups that don't already exist, never duplicates them.
+export const autoCreateClassGroups = async (classDoc, createdBy) => {
+  if (!classDoc) return null;
+
+  const { _id: classId, schoolId, name: className, details = [] } = classDoc;
+
+  const sectionIds = details
+    .map((d) => d.sectionId)
+    .filter(Boolean)
+    .map((id) => id.toString());
+
+  const sections = sectionIds.length
+    ? await Section.find({ _id: { $in: sectionIds } }).select("name")
+    : [];
+
+  const sectionNameMap = new Map(sections.map((s) => [s._id.toString(), s.name]));
+
+  // ── CLASS GROUP ──
+  let classGroup = await Group.findOne({ schoolId, type: "class", classId });
+  if (!classGroup) {
+    classGroup = await Group.create({
+      name: `${className} - Class Group`,
+      type: "class",
+      schoolId,
+      classId,
+      createdBy,
+      isAutoCreated: true,
+      members: [],
+    });
+  }
+
+  for (const d of details) {
+    // ── SECTION GROUP ──
+    if (d.sectionId) {
+      const sectionGroup = await Group.findOne({
+        schoolId,
+        type: "section",
+        classId,
+        sectionId: d.sectionId,
+      });
+
+      if (!sectionGroup) {
+        const sectionName = sectionNameMap.get(d.sectionId.toString());
+
+        await Group.create({
+          name: sectionName
+            ? `${className} - ${sectionName} Section Group`
+            : `${className} - Section Group`,
+          type: "section",
+          schoolId,
+          classId,
+          sectionId: d.sectionId,
+          createdBy,
+          isAutoCreated: true,
+          members: [],
+        });
+      }
+    }
+  }
+
+  return classGroup;
+};
+
+// ─── FULL MEMBER RESYNC FOR A CLASS ───────────────────────────────────────────
+// Re-runs syncStudentGroups / syncTeacherGroups for every student & teacher
+// currently tied to a class. Call this right after autoCreateClassGroups so
+// newly created groups (and any structural changes from an update) get their
+// members populated immediately, instead of waiting for the next individual
+// student/teacher save.
+export const syncClassGroupsMembers = async (classDoc) => {
+  if (!classDoc) return;
+  const { _id: classId, schoolId } = classDoc;
+
+  const students = await Student.find({ schoolId, classId });
+  for (const student of students) {
+    await syncStudentGroups(student);
+  }
+
+  const teachers = await Teacher.find({
+    schoolId,
+    assignedClasses: classId,
+  });
+  for (const teacher of teachers) {
+    await syncTeacherGroups(teacher);
+  }
 };

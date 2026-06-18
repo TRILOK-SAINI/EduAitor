@@ -8,6 +8,7 @@ import {
   deleteGroup,
   addMembers,
   removeMembers,
+  changeMemberRole,
 } from "../controllers/groupController.js";
 
 import { authMiddleware } from "../auth/auth.js";
@@ -44,5 +45,8 @@ router.post("/:id/members", addMembers);
 
 // Remove members
 router.delete("/:id/members", removeMembers);
+
+// Change member role
+router.patch('/:id/members/role', changeMemberRole);
 
 export default router;

@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import { toast } from "react-toastify";
-import logo from "../../public/eduaitor.png"; 
+import logo from "/eduaitor.png"; 
 
 const API = import.meta.env.VITE_API_URL;
 

@@ -57,7 +57,7 @@ export const downloadStudentTemplate = (req, res) => {
       guardianMobile: "",
       guardianRelation: "",
       address: "123 Main Street",
-      className: "Class 5", // must match an existing class name for this school
+      className: "5", // must match an existing class name for this school
       sectionName: "A", // must match an existing section name for this school
       rollNo: "21",
       studentType: "Day Scholar",

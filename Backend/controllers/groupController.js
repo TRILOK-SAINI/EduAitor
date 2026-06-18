@@ -22,8 +22,11 @@ const normalizeUser = (jwtUser) => {
     userType = "student";
     userId = jwtUser.student_id;
   } else if (jwtUser.role === "parent_admin") {
-    userType = "parent";
-    userId = jwtUser.student_id; // parent mapped to child
+    userType = "student";
+    userId = jwtUser.student_id; // parent mapped to child for group membership
+  } else if (jwtUser.role === "staff_admin") {
+    userType = "staff";
+    userId = jwtUser.staff_id;
   }
 
   return {
@@ -37,6 +40,49 @@ const normalizeUser = (jwtUser) => {
 
 const isMember = (group, userId) =>
   group.members.some((m) => m.userId.toString() === userId.toString());
+
+// Resolve a broadcast "audience" selection into a flat member list.
+// audience = {
+//   allUsers: bool,      -> every student + every teacher in the school
+//   allStudents: bool,   -> every student in the school (or in classIds, if given)
+//   allTeachers: bool,   -> every teacher in the school (or assigned to classIds, if given)
+//   classIds: [ids],     -> optional scope: only students/teachers of these classes
+// }
+const resolveAudienceMembers = async ({ schoolId, audience }) => {
+  if (!audience) return [];
+
+  const { allUsers, allStudents, allTeachers, classIds } = audience;
+  const wantStudents = allUsers || allStudents;
+  const wantTeachers = allUsers || allTeachers;
+
+  if (!wantStudents && !wantTeachers) return [];
+
+  const scopedToClasses = Array.isArray(classIds) && classIds.length > 0;
+
+  const members = [];
+
+  if (wantStudents) {
+    const studentFilter = { schoolId };
+    if (scopedToClasses) studentFilter.classId = { $in: classIds };
+
+    const students = await Student.find(studentFilter).select("_id");
+    members.push(
+      ...students.map((s) => ({ userId: s._id, userType: "student" })),
+    );
+  }
+
+  if (wantTeachers) {
+    const teacherFilter = { schoolId };
+    if (scopedToClasses) teacherFilter.assignedClasses = { $in: classIds };
+
+    const teachers = await Teacher.find(teacherFilter).select("_id");
+    members.push(
+      ...teachers.map((t) => ({ userId: t._id, userType: "teacher" })),
+    );
+  }
+
+  return members;
+};
 
 // ─── Group CRUD ───────────────────────────────────────────────────────────────
 
@@ -53,7 +99,84 @@ export const createGroup = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not allowed" });
     }
 
-    const { name, type, description, classId, sectionId, subjectId } = req.body;
+    const {
+      name,
+      type,
+      description,
+      classId,
+      sectionId,
+      subjectId,
+      audience,
+      permissions,
+    } = req.body;
+
+    const validatePermissionArray = (arr, fieldName) => {
+      if (arr === undefined) return { valid: true, value: undefined };
+      if (!Array.isArray(arr)) {
+        return {
+          valid: false,
+          message: `${fieldName} must be an array`,
+        };
+      }
+
+      const allowedRoles = ["teacher", "student", "admin", "staff"];
+      const invalid = arr.filter((role) => !allowedRoles.includes(role));
+      if (invalid.length > 0) {
+        return {
+          valid: false,
+          message: `Invalid ${fieldName}: ${invalid.join(", ")}`,
+        };
+      }
+
+      return {
+        valid: true,
+        value: [...new Set(arr)],
+      };
+    };
+
+    const canPostValidation = validatePermissionArray(
+      permissions?.canPost,
+      "permissions.canPost",
+    );
+    if (!canPostValidation.valid) {
+      return res
+        .status(400)
+        .json({ success: false, message: canPostValidation.message });
+    }
+
+    const canCommentValidation = validatePermissionArray(
+      permissions?.canComment,
+      "permissions.canComment",
+    );
+    if (!canCommentValidation.valid) {
+      return res
+        .status(400)
+        .json({ success: false, message: canCommentValidation.message });
+    }
+
+    let groupPermissions;
+    if (canPostValidation.value !== undefined) {
+      groupPermissions = {
+        ...(groupPermissions || {}),
+        canPost: canPostValidation.value,
+      };
+    }
+    if (canCommentValidation.value !== undefined) {
+      groupPermissions = {
+        ...(groupPermissions || {}),
+        canComment: canCommentValidation.value,
+      };
+    }
+
+    if (
+      (type === "broadcast" || type === "announcement") &&
+      groupPermissions?.canPost === undefined
+    ) {
+      groupPermissions = {
+        ...(groupPermissions || {}),
+        canPost: ["admin"],
+      };
+    }
 
     let members = [];
 
@@ -116,9 +239,10 @@ export const createGroup = async (req, res) => {
       );
 
       if (section) {
-        teacherIds = [...new Set(teacherIds.map(String))]
+        teacherIds = (section.subjectTeachers || [])
           .filter((st) => st.subjectId?.toString() === subjectId)
-          .map((st) => st.teacherId);
+          .map((st) => st.teacherId)
+          .filter(Boolean);
       }
 
       members = [
@@ -133,10 +257,33 @@ export const createGroup = async (req, res) => {
       ];
     }
 
-    // ─── TEACHER / CUSTOM GROUP ──────────────────
-    if (["teacher", "custom"].includes(type)) {
+    // ─── TEACHER / CUSTOM / BROADCAST GROUP ──────
+    // "broadcast" groups (and any other type with an explicit member list)
+    // can ALSO carry an `audience` selection — e.g. "all students", "all
+    // teachers", "everyone", or scoped to specific classes — which gets
+    // merged in below.
+    if (["teacher", "custom", "broadcast", "announcement"].includes(type)) {
       members = req.body.members || [];
     }
+
+    // ─── AUDIENCE-BASED BROADCAST MEMBERS ────────
+    if (audience) {
+      const audienceMembers = await resolveAudienceMembers({
+        schoolId,
+        audience,
+      });
+      members = [...members, ...audienceMembers];
+    }
+
+    // De-dupe (creator/audience/manual list can overlap)
+    const seen = new Set();
+    members = members.filter((m) => {
+      if (!m?.userId) return false;
+      const key = `${m.userId}_${m.userType}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
     // Always include creator as admin
     const exists = members.some(
@@ -161,6 +308,15 @@ export const createGroup = async (req, res) => {
       subjectId: subjectId || null,
       createdBy: { userId, userType },
       members,
+      audience: audience
+        ? {
+            allUsers: !!audience.allUsers,
+            allStudents: !!audience.allStudents,
+            allTeachers: !!audience.allTeachers,
+            classIds: audience.classIds || [],
+          }
+        : undefined,
+      permissions: groupPermissions,
       isAutoCreated: ["class", "section", "subject"].includes(type),
     });
 
@@ -307,6 +463,57 @@ export const updateGroup = async (req, res) => {
       if (req.body[field] !== undefined) group[field] = req.body[field];
     });
 
+    if (req.body.permissions !== undefined) {
+      const { permissions } = req.body;
+      group.permissions = group.permissions || {};
+
+      const validatePermissionArray = (arr, fieldName) => {
+        if (!Array.isArray(arr)) {
+          return {
+            valid: false,
+            message: `${fieldName} must be an array`,
+          };
+        }
+
+        const allowedRoles = ["teacher", "student", "admin", "staff"];
+        const invalid = arr.filter((role) => !allowedRoles.includes(role));
+        if (invalid.length > 0) {
+          return {
+            valid: false,
+            message: `Invalid ${fieldName}: ${invalid.join(", ")}`,
+          };
+        }
+
+        return { valid: true, value: [...new Set(arr)] };
+      };
+
+      if (permissions.canPost !== undefined) {
+        const result = validatePermissionArray(
+          permissions.canPost,
+          "permissions.canPost",
+        );
+        if (!result.valid) {
+          return res
+            .status(400)
+            .json({ success: false, message: result.message });
+        }
+        group.permissions.canPost = result.value;
+      }
+
+      if (permissions.canComment !== undefined) {
+        const result = validatePermissionArray(
+          permissions.canComment,
+          "permissions.canComment",
+        );
+        if (!result.valid) {
+          return res
+            .status(400)
+            .json({ success: false, message: result.message });
+        }
+        group.permissions.canComment = result.value;
+      }
+    }
+
     await group.save();
     res.json({ success: true, data: group });
   } catch (err) {
@@ -323,24 +530,41 @@ export const deleteGroup = async (req, res) => {
     const { userType, schoolId } = normalizeUser(req.user);
 
     if (userType !== "admin") {
-      return res.status(403).json({ success: false, message: "Admin only" });
+      return res.status(403).json({
+        success: false,
+        message: "Admin only",
+      });
     }
 
-    const group = await Group.findOneAndUpdate(
-      { _id: req.params.id, schoolId },
-      { status: "Archived" },
-      { new: true },
-    );
+    const group = await Group.findOne({
+      _id: req.params.id,
+      schoolId,
+    });
 
     if (!group) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Group not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Group not found",
+      });
     }
 
-    res.json({ success: true, message: "Group archived", data: group });
+    // delete all messages of this group
+    await Message.deleteMany({
+      groupId: group._id,
+    });
+
+    // delete group
+    await Group.findByIdAndDelete(group._id);
+
+    res.json({
+      success: true,
+      message: "Group deleted successfully",
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -459,58 +683,71 @@ export const removeMembers = async (req, res) => {
   }
 };
 
-// ─── Auto-Create Groups ───────────────────────────────────────────────────────
+/**
+ * PATCH /groups/:id/members/role
+ * Body: { userId, role }
+ */
+export const changeMemberRole = async (req, res) => {
+  try {
+    const {
+      userId: actorId,
+      userType: actorType,
+      schoolId,
+    } = normalizeUser(req.user);
+    const { userId, role } = req.body;
 
-// export const autoCreateClassGroups = async ({
-//   schoolId,
-//   classId,
-//   className,
-//   sectionId,
-//   sectionName,
-//   subjectIds = [],
-//   teacherMembers = [],
-//   studentMembers = [],
-//   createdBy,
-// }) => {
-//   const toCreate = [];
+    if (!userId || !role) {
+      return res
+        .status(400)
+        .json({ success: false, message: "userId and role are required" });
+    }
 
-//   toCreate.push({
-//     name: `${className} - Class Group`,
-//     type: "class",
-//     schoolId,
-//     classId,
-//     createdBy,
-//     isAutoCreated: true,
-//     members: [...teacherMembers, ...studentMembers],
-//   });
+    const allowedRoles = ["member", "moderator", "admin"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: "Invalid role" });
+    }
 
-//   if (sectionId) {
-//     toCreate.push({
-//       name: `${className} ${sectionName} - Section`,
-//       type: "section",
-//       schoolId,
-//       classId,
-//       sectionId,
-//       createdBy,
-//       isAutoCreated: true,
-//       members: [...teacherMembers, ...studentMembers],
-//     });
-//   }
+    const group = await Group.findOne({ _id: req.params.id, schoolId });
+    if (!group)
+      return res
+        .status(404)
+        .json({ success: false, message: "Group not found" });
 
-//   for (const subjectId of subjectIds) {
-//     toCreate.push({
-//       name: `${className} - Subject Group`,
-//       type: "subject",
-//       schoolId,
-//       classId,
-//       sectionId: sectionId || null,
-//       subjectId,
-//       createdBy,
-//       isAutoCreated: true,
-//       members: teacherMembers,
-//     });
-//   }
+    const actorRecord = group.members.find(
+      (m) => m.userId.toString() === actorId.toString(),
+    );
+    if (actorType !== "admin" && actorRecord?.role !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Insufficient permissions" });
+    }
 
-//   const groups = await Group.insertMany(toCreate, { ordered: false });
-//   return groups;
-// };
+    // Prevent changing the group's creator role to non-admin
+    const creatorId = group.createdBy?.userId?.toString();
+    if (creatorId && creatorId === userId && role !== "admin") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Cannot change group creator role" });
+    }
+
+    let changed = false;
+    group.members = group.members.map((m) => {
+      if (m.userId.toString() === userId.toString()) {
+        changed = true;
+        return { ...m.toObject(), role };
+      }
+      return m;
+    });
+
+    if (!changed) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Member not found in group" });
+    }
+
+    await group.save();
+    res.json({ success: true, message: "Member role updated", data: group });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

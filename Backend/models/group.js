@@ -23,9 +23,20 @@ const groupSchema = new mongoose.Schema(
         "teacher",
         "event",
         "announcement",
+        "broadcast",
         "custom",
       ],
       required: true,
+    },
+
+    // Snapshot of how a broadcast/announcement group's members were chosen,
+    // kept for display/reference only — actual members always live in
+    // `members` below.
+    audience: {
+      allUsers: { type: Boolean, default: false },
+      allStudents: { type: Boolean, default: false },
+      allTeachers: { type: Boolean, default: false },
+      classIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
     },
 
     schoolId: {

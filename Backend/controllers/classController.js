@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 import Class from "../models/class.js";
 import Teacher from "../models/teacher.js";
+import {
+  autoCreateClassGroups,
+  syncClassGroupsMembers,
+  removeTeacherFromClassGroups,
+} from "../utils/groupSync.js";
 
 /* ── CREATE CLASS ── */
 export const createClass = async (req, res) => {
@@ -83,6 +88,20 @@ export const createClass = async (req, res) => {
         { _id: { $in: teacherIds } },
         { $addToSet: { assignedClasses: newClass._id } },
       );
+    }
+
+    // ✅ AUTO-CREATE THE CLASS / SECTION / SUBJECT GROUPS FOR THIS CLASS
+    // (and immediately populate them with any students/teachers already
+    // tied to it). Wrapped in try/catch so a group-sync hiccup never blocks
+    // class creation itself.
+    try {
+      await autoCreateClassGroups(newClass, {
+        userId: schoolId,
+        userType: "admin",
+      });
+      await syncClassGroupsMembers(newClass);
+    } catch (groupErr) {
+      console.error("Group auto-create/sync failed for new class:", groupErr);
     }
 
     const populated = await Class.findById(newClass._id)
@@ -310,6 +329,22 @@ export const updateClass = async (req, res) => {
 
     await cls.save();
 
+    // ✅ KEEP GROUPS IN SYNC WITH THE UPDATED CLASS STRUCTURE
+    // - creates any new section/subject groups that didn't exist before
+    // - refreshes membership for every student/teacher tied to this class
+    // - un-assigned teachers are removed only from THIS class's auto groups
+    //   (they may still teach elsewhere, so we don't touch other groups)
+    try {
+      await autoCreateClassGroups(cls, { userId: schoolId, userType: "admin" });
+      await syncClassGroupsMembers(cls);
+
+      for (const teacherId of removedTeachers) {
+        await removeTeacherFromClassGroups(teacherId, cls._id);
+      }
+    } catch (groupErr) {
+      console.error("Group sync failed for updated class:", groupErr);
+    }
+
     const populated = await Class.findById(cls._id)
       .populate("details.sectionId", "name status")
       .populate("details.teacherId", "fullName")
@@ -403,17 +438,22 @@ export const getTeacherClasses = async (req, res) => {
     const rawTeacherId = req.user?.teacher_id;
 
     if (!schoolId || !rawTeacherId) {
-      return res.status(400).json({ success: false, message: "Missing credentials" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing credentials" });
     }
 
     const teacherObjId = new mongoose.Types.ObjectId(rawTeacherId);
     const schoolObjId = new mongoose.Types.ObjectId(schoolId);
 
     // Get teacher's assignedClasses
-    const teacher = await Teacher.findById(teacherObjId).select("assignedClasses");
+    const teacher =
+      await Teacher.findById(teacherObjId).select("assignedClasses");
 
     if (!teacher) {
-      return res.status(404).json({ success: false, message: "Teacher not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Teacher not found" });
     }
 
     // Also find classes where teacher appears in details

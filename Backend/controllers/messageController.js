@@ -7,14 +7,26 @@ import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
 // ─── Auth normalizer ───────────────────────────────────────────
 
 const normalizeUser = (jwtUser) => {
-  const userType =
-    jwtUser.role === "teacher_admin"
-      ? "teacher"
-      : jwtUser.role === "school_admin"
-        ? "admin"
-        : null;
+  let userType = null;
+  let userId = null;
 
-  const userId = jwtUser.teacher_id || jwtUser.school_id;
+  if (jwtUser.role === "teacher_admin") {
+    userType = "teacher";
+    userId = jwtUser.teacher_id;
+  } else if (jwtUser.role === "school_admin") {
+    userType = "admin";
+    userId = jwtUser.school_id;
+  } else if (jwtUser.role === "staff_admin") {
+    userType = "staff";
+    userId = jwtUser.staff_id;
+  } else if (jwtUser.role === "student_admin") {
+    userType = "student";
+    userId = jwtUser.student_id;
+  } else if (jwtUser.role === "parent_admin") {
+    userType = "student";
+    userId = jwtUser.student_id;
+  }
+
   const schoolId = jwtUser.school_id;
 
   return { userId, userType, schoolId };
@@ -52,25 +64,16 @@ export const sendMessage = async (req, res) => {
   try {
     const { userId, userType, schoolId } = normalizeUser(req.user);
 
-    // 🔒 Only teacher & admin
-    if (!["teacher", "admin"].includes(userType)) {
-      return res.status(403).json({
-        success: false,
-        message: "Only teachers and admins can send messages",
-      });
-    }
-
     const { groupId, text } = req.body;
     const file = req.file;
 
-    if (!text && !file) {
-      return res.status(400).json({
+    if (!userType) {
+      return res.status(403).json({
         success: false,
-        message: "Message cannot be empty",
+        message: "Invalid user role for messaging",
       });
     }
 
-    // Check group access
     const { group, error, status } = await verifyGroupAccess(
       groupId,
       schoolId,
@@ -80,6 +83,21 @@ export const sendMessage = async (req, res) => {
 
     if (error) {
       return res.status(status).json({ success: false, message: error });
+    }
+
+    const allowedPostRoles = group.permissions?.canPost || ["teacher", "admin"];
+    if (!allowedPostRoles.includes(userType)) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to send messages in this group",
+      });
+    }
+
+    if (!text && !file) {
+      return res.status(400).json({
+        success: false,
+        message: "Message cannot be empty",
+      });
     }
 
     let fileData = null;

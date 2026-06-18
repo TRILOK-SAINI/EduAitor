@@ -547,7 +547,7 @@ export default function ClassPage() {
                         onChange={(e) =>
                           setForm((p) => ({ ...p, name: e.target.value }))
                         }
-                        placeholder="e.g. Class 1"
+                        placeholder="e.g. 1"
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-400"
                       />
                     </div>
