@@ -4,33 +4,13 @@ import {
   FaTachometerAlt,
   FaUserGraduate,
   FaChevronDown,
-  FaChevronRight,
-  FaSignOutAlt,
-  FaClock,
   FaWallet,
-  FaTimes,
-  FaUserShield,
-  FaSchool,
+  FaBusAlt,
   FaCalendarAlt,
   FaBell,
-  FaBusAlt,
-  FaBookDead,
   FaCalendar,
-  FaBookOpen,
-  FaUserAlt,
-  FaUsers,
   FaBlog,
 } from "react-icons/fa";
-
-import {
-  FaBookJournalWhills,
-  FaSchoolFlag,
-  FaUserGroup,
-} from "react-icons/fa6";
-import { FiUsers } from "react-icons/fi";
-
-import { GiOpenBook, GiSchoolBag, GiTeacher } from "react-icons/gi";
-import { HiAcademicCap } from "react-icons/hi2";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -40,23 +20,13 @@ import UpComingNotifications from "../components/UpComingNotifications";
 /* ─── Color map ─────────────────────────────────────────────── */
 const COLOR_MAP = {
   Dashboard: { bg: "#FFF7ED", icon: "#F97316", dot: "#FED7AA" },
-  Students: { bg: "#EFF6FF", icon: "#3B82F6", dot: "#BFDBFE" },
-  Teachers: { bg: "#F0FDF4", icon: "#22C55E", dot: "#BBF7D0" },
-  Classes: { bg: "#FAF5FF", icon: "#A855F7", dot: "#E9D5FF" },
-  Attendance: { bg: "#FFF1F2", icon: "#F43F5E", dot: "#FFD5DB" },
-  "My Child": { bg: "#FFF7ED", icon: "#EF4444", dot: "#FEE2E2" },
-  Syllabus: { bg: "#F0FDF4", icon: "#10B981", dot: "#A7F3D0" },
-  Timetable: { bg: "#EFF6FF", icon: "#6366F1", dot: "#C7D2FE" },
+  "My Child": { bg: "#EFF6FF", icon: "#3B82F6", dot: "#BFDBFE" },
   "Fee Details": { bg: "#FDF4FF", icon: "#C026D3", dot: "#F5D0FE" },
-  Events: { bg: "#FFF1F2", icon: "#E11D48", dot: "#FECDD3" },
-  Notices: { bg: "#FFF7ED", icon: "#EA580C", dot: "#FED7AA" },
-  Calendar: { bg: "#EFF6FF", icon: "#0EA5E9", dot: "#BAE6FD" },
   Transport: { bg: "#F0FDFA", icon: "#0D9488", dot: "#99F6E4" },
-  Blogs: {
-    bg: "#F0FDFA",
-    icon: "#0D9488",
-    dot: "#99F6E4",
-  },
+  Notices: { bg: "#FFF7ED", icon: "#EA580C", dot: "#FED7AA" },
+  Events: { bg: "#FFF1F2", icon: "#E11D48", dot: "#FECDD3" },
+  Calendar: { bg: "#EFF6FF", icon: "#0EA5E9", dot: "#BAE6FD" },
+  Blogs: { bg: "#F0FDFA", icon: "#0D9488", dot: "#99F6E4" },
 };
 const DEFAULT_COLOR = { bg: "#F3F4F6", icon: "#6B7280", dot: "#E5E7EB" };
 
@@ -85,7 +55,7 @@ function GreetingHeader({ name, role, loginAs }) {
       className="rounded-[20px] px-5 py-5 mb-1 relative overflow-hidden"
       style={{
         background:
-          "linear-gradient(135deg, rgb(var(--sidebar)) 0%, rgb(var(--primary)) 100%)",
+          "linear-gradient(135deg, rgb(var(--sidebar)) 0%, rgb(var(--primary)) 10%)",
       }}
     >
       {/* Decorative dot */}
@@ -93,15 +63,31 @@ function GreetingHeader({ name, role, loginAs }) {
         className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 pointer-events-none"
         style={{ background: "#fff" }}
       />
+
+      {/* Decorative wave */}
+      <svg
+        className="absolute bottom-0 left-0 w-full pointer-events-none"
+        viewBox="0 0 400 24"
+        preserveAspectRatio="none"
+        style={{ height: 22 }}
+      >
+        <path
+          d="M0,14 C50,26 100,2 150,14 C200,26 250,2 300,14 C350,26 400,14 400,14 L400,24 L0,24 Z"
+          fill="rgba(255,255,255,0.08)"
+        />
+      </svg>
+
       {displayRole && (
-        <p className="text-white/80 text-[11px] font-bold uppercase tracking-wide mb-1">
+        <p className="relative text-white/80 text-[11px] font-bold uppercase tracking-wide mb-1">
           {displayRole}
         </p>
       )}
-      <h1 className="text-white text-xl font-extrabold mb-1 capitalize">
+      <h1 className="relative text-white text-xl font-extrabold mb-1 capitalize">
         Welcome, {name}
       </h1>
-      <p className="text-white/80 text-[12.5px] font-semibold">{dateStr}</p>
+      <p className="relative text-white/80 text-[12.5px] font-semibold">
+        {dateStr}
+      </p>
     </div>
   );
 }
@@ -121,7 +107,6 @@ function ExitPopup({ onConfirm, onCancel }) {
           className="w-10 h-1 rounded-full mx-auto mb-6"
           style={{ background: "rgb(var(--border))" }}
         />
-
         <div className="flex flex-col items-center mb-7">
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-4"
@@ -142,7 +127,6 @@ function ExitPopup({ onConfirm, onCancel }) {
             Are you sure you want to logout and exit?
           </p>
         </div>
-
         <div className="flex gap-3">
           <button
             onClick={onCancel}
@@ -171,20 +155,13 @@ function ExitPopup({ onConfirm, onCancel }) {
   );
 }
 
-/* ─── Accordion panel — ALWAYS rendered, never unmounted ───────
-   KEY FIX: conditional rendering caused unmount on close so
-   the closing animation never played. Now we keep it mounted
-   and drive open/close purely through max-height transition.
-──────────────────────────────────────────────────────────────── */
+/* ─── Accordion panel ───────────────────────────────────────── */
 function AccordionPanel({ isOpen, children }) {
   const innerRef = useRef(null);
   const [height, setHeight] = useState(0);
 
-  /* Measure whenever children change */
   useEffect(() => {
-    if (innerRef.current) {
-      setHeight(innerRef.current.scrollHeight);
-    }
+    if (innerRef.current) setHeight(innerRef.current.scrollHeight);
   });
 
   return (
@@ -200,62 +177,57 @@ function AccordionPanel({ isOpen, children }) {
   );
 }
 
-/* ─── Card tile ─────────────────────────────────────────────── */
+/* ─── Card tile — TeacherMenu style ────────────────────────── */
+/* Solid icon square (white icon), tinted color fills the whole tile */
 function MenuCard({ item, color, globalIdx, isOpen, onToggle, isDark }) {
   const navigate = useNavigate();
   const hasChildren = Boolean(item.children);
 
-  const iconBg = isDark ? "rgb(var(--surface))" : color.bg;
-  const dotColor = isDark ? "rgb(var(--border))" : color.dot;
+  const cardBg = isDark ? "rgb(var(--surface))" : color.bg;
 
   return (
     <div
       onClick={() => (hasChildren ? onToggle() : navigate(item.path))}
       className={[
         "relative overflow-hidden flex flex-col items-center cursor-pointer select-none",
-        "px-3.5 pt-5 pb-4 transition-all duration-150 active:scale-95 animate-fade-slide-up",
+        "px-3.5 pt-5 pb-4 transition-all duration-150 active:scale-95",
         isOpen ? "rounded-t-[18px] shadow-md" : "rounded-[18px] shadow-sm",
       ].join(" ")}
       style={{
-        background: "rgb(var(--bg))",
+        background: cardBg,
         border: isOpen
-          ? `2px solid ${color.icon}40`
-          : "1px solid rgb(var(--border))",
+          ? `2px solid ${color.icon}55`
+          : `1px solid ${color.icon}22`,
         animationDelay: `${globalIdx * 45}ms`,
       }}
     >
-      {/* Decorative dot */}
+      {/* Decorative glossy circle */}
       <div
-        className="absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-50 pointer-events-none"
-        style={{ background: dotColor }}
+        className="absolute -top-3 -right-3 w-14 h-14 rounded-full pointer-events-none"
+        style={{ background: "rgba(255,255,255,0.35)" }}
       />
 
-      {/* Icon bubble */}
+      {/* Icon square — solid accent color, white icon */}
       <div
-        className="flex items-center justify-center mb-3 rounded-[15px] text-[22px]"
-        style={{
-          width: 52,
-          height: 52,
-          background: iconBg,
-          color: color.icon,
-        }}
+        className="relative flex items-center justify-center mb-3 rounded-[15px] text-[20px] shadow-sm"
+        style={{ width: 48, height: 48, background: color.icon, color: "#fff" }}
       >
         {item.icon}
       </div>
 
       {/* Name */}
       <p
-        className="m-0 text-[12.5px] font-extrabold text-center leading-snug"
+        className="relative m-0 text-[12.5px] font-extrabold text-center leading-snug"
         style={{ color: "rgb(var(--text))" }}
       >
         {item.name}
       </p>
 
-      {/* Badge */}
+      {/* Badge for items with children */}
       {hasChildren && (
         <div
-          className="mt-2 px-2.5 py-0.5 rounded-full flex items-center gap-1"
-          style={{ background: iconBg }}
+          className="relative mt-2 px-2.5 py-0.5 rounded-full flex items-center gap-1"
+          style={{ background: "rgba(255,255,255,0.55)" }}
         >
           <span className="text-[10px] font-bold" style={{ color: color.icon }}>
             {item.children.length} items
@@ -289,9 +261,7 @@ function ChildList({ children, color, isDark }) {
           <div
             key={child.name}
             onClick={() => navigate(child.path)}
-            className="flex items-center gap-3 rounded-2xl px-4 py-3
-                       cursor-pointer active:scale-[0.97] transition-transform
-                       shadow-sm animate-fade-slide-right"
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 cursor-pointer active:scale-[0.97] transition-transform shadow-sm"
             style={{
               background: "rgb(var(--bg))",
               border: "1.5px solid rgb(var(--border))",
@@ -347,25 +317,19 @@ export default function ParentMenu() {
 
   const logout = async () => {
     try {
-      const res = await axios.post(
-        `${API}/auth/logout`,
-        {},
-        {
-          withCredentials: true,
-        },
-      );
+      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
       toast.info("You have been logged out successfully.");
     } catch (err) {
       console.error("Backend logout failed:", err);
       toast.error("Logout failed. Please try again.");
     }
-    setUser(null); // Clear user from context
+    setUser(null);
     localStorage.clear();
     sessionStorage.clear();
     navigate("/admin/login", { replace: true });
   };
 
-  // ── Greeting info (same pattern as Topbar) ──────────────────
+  // ── Greeting info ───────────────────────────────────────────
   const greetingName = user?.name || user?.school_name || "User";
   const greetingRole = user?.role || "User";
   const greetingLoginAs = user?.loginAs;
@@ -381,52 +345,33 @@ export default function ParentMenu() {
     { name: "Blogs", icon: <FaBlog />, path: "/parent/blogs" },
   ];
 
-  /* Group into rows of 2 — keeps grid columns stable */
   const rows = [];
   for (let i = 0; i < menu.length; i += 2) rows.push(menu.slice(i, i + 2));
 
-  /* ── Mobile back-button → exit popup ──────────────────────────
-     FIX: empty dependency array (runs once on mount only),
-     no pathname check (component only ever mounts at /school/menu),
-     re-push null state to keep user trapped on this page.
-  ─────────────────────────────────────────────────────────────── */
+  // ── Mobile back-button → exit popup ─────────────────────────
   useEffect(() => {
     const isMobile =
       /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ||
       window.innerWidth <= 768;
-
     if (!isMobile) return;
 
     let isActive = true;
 
     const pushStateSafely = () => {
-      // Avoid stacking multiple entries
-      if (window.history.state !== "menu-lock") {
+      if (window.history.state !== "menu-lock")
         window.history.pushState("menu-lock", "");
-      }
     };
-
-    // Initial push
     pushStateSafely();
 
-    const onPopState = (e) => {
+    const onPopState = () => {
       if (!isActive) return;
-
-      // Always re-push so user stays here
       pushStateSafely();
-
       setShowExit(true);
     };
+    const onFocus = () => pushStateSafely();
 
     window.addEventListener("popstate", onPopState);
-
-    // 🔥 IMPORTANT: handle when user comes back to tab/page
-    const onFocus = () => {
-      pushStateSafely();
-    };
-
     window.addEventListener("focus", onFocus);
-
     return () => {
       isActive = false;
       window.removeEventListener("popstate", onPopState);
@@ -434,16 +379,11 @@ export default function ParentMenu() {
     };
   }, []);
 
-  const handleLogout = () => {
-    logout();
-  };
-
   return (
     <div
       className="min-h-screen font-nunito"
       style={{ background: "rgb(var(--bg))" }}
     >
-      {/* Grid — row-based so accordion never breaks column count */}
       <div className="p-4 flex flex-col gap-3">
         {/* Greeting */}
         <GreetingHeader
@@ -451,17 +391,16 @@ export default function ParentMenu() {
           role={greetingRole}
           loginAs={greetingLoginAs}
         />
-        
+
         <UpComingNotifications />
+
         {rows.map((row, rowIdx) => {
-          /* Find the open item in this row (there can be at most one open globally) */
           const openInRow = row.find(
             (item) => item.name === openItem && item.children,
           );
 
           return (
             <div key={rowIdx} className="flex flex-col">
-              {/* Always 2-column card row */}
               <div className="grid grid-cols-2 gap-3">
                 {row.map((item, colIdx) => {
                   const color = COLOR_MAP[item.name] ?? DEFAULT_COLOR;
@@ -482,12 +421,8 @@ export default function ParentMenu() {
                 })}
               </div>
 
-              {/* AccordionPanel is ALWAYS rendered for every row that has a child-item.
-                  It is never conditionally mounted/unmounted — only open/closed via
-                  max-height so the closing transition always plays. */}
               {row.some((item) => item.children) &&
                 (() => {
-                  /* Pick the child-item in this row (open or not — panel stays mounted) */
                   const childItem = openInRow ?? row.find((i) => i.children);
                   const color = COLOR_MAP[childItem.name] ?? DEFAULT_COLOR;
                   return (
@@ -506,11 +441,9 @@ export default function ParentMenu() {
       </div>
 
       <BlogFeed />
+
       {showExit && (
-        <ExitPopup
-          onConfirm={handleLogout}
-          onCancel={() => setShowExit(false)}
-        />
+        <ExitPopup onConfirm={logout} onCancel={() => setShowExit(false)} />
       )}
     </div>
   );

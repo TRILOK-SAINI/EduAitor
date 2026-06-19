@@ -98,7 +98,7 @@ function GreetingHeader({ name, role, loginAs }) {
       className="rounded-[20px] px-5 py-5 mb-1 relative overflow-hidden"
       style={{
         background:
-          "linear-gradient(135deg, rgb(var(--sidebar)) 0%, rgb(var(--primary)) 100%)",
+          "linear-gradient(135deg, rgb(var(--sidebar)) 0%, rgb(var(--primary)) 10%)",
       }}
     >
       {/* Decorative dot */}
@@ -106,15 +106,31 @@ function GreetingHeader({ name, role, loginAs }) {
         className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 pointer-events-none"
         style={{ background: "#fff" }}
       />
+
+      {/* Decorative wave — echoes the hero-card wave in the reference mock */}
+      <svg
+        className="absolute bottom-0 left-0 w-full pointer-events-none"
+        viewBox="0 0 400 24"
+        preserveAspectRatio="none"
+        style={{ height: 22 }}
+      >
+        <path
+          d="M0,14 C50,26 100,2 150,14 C200,26 250,2 300,14 C350,26 400,14 400,14 L400,24 L0,24 Z"
+          fill="rgba(255,255,255,0.08)"
+        />
+      </svg>
+
       {displayRole && (
-        <p className="text-white/80 text-[11px] font-bold uppercase tracking-wide mb-1">
+        <p className="relative text-white/80 text-[11px] font-bold uppercase tracking-wide mb-1">
           {displayRole}
         </p>
       )}
-      <h1 className="text-white text-xl font-extrabold mb-1 capitalize">
+      <h1 className="relative text-white text-xl font-extrabold mb-1 capitalize">
         Welcome, {name}
       </h1>
-      <p className="text-white/80 text-[12.5px] font-semibold">{dateStr}</p>
+      <p className="relative text-white/80 text-[12.5px] font-semibold">
+        {dateStr}
+      </p>
     </div>
   );
 }
@@ -205,12 +221,15 @@ function AccordionPanel({ isOpen, children }) {
 }
 
 /* ─── Card tile ─────────────────────────────────────────────── */
+/* Restyled to match the flat colored quick-action tiles in the
+   reference mock — solid icon square (white icon) instead of a
+   light icon bubble, and the tinted color now fills the whole
+   tile rather than just an accent dot. */
 function MenuCard({ item, color, globalIdx, isOpen, onToggle, isDark }) {
   const navigate = useNavigate();
   const hasChildren = Boolean(item.children);
 
-  const iconBg = isDark ? "rgb(var(--surface))" : color.bg;
-  const dotColor = isDark ? "rgb(var(--border))" : color.dot;
+  const cardBg = isDark ? "rgb(var(--surface))" : color.bg;
 
   return (
     <div
@@ -221,33 +240,40 @@ function MenuCard({ item, color, globalIdx, isOpen, onToggle, isDark }) {
         isOpen ? "rounded-t-[18px] shadow-md" : "rounded-[18px] shadow-sm",
       ].join(" ")}
       style={{
-        background: "rgb(var(--bg))",
+        background: cardBg,
         border: isOpen
-          ? `2px solid ${color.icon}40`
-          : "1px solid rgb(var(--border))",
+          ? `2px solid ${color.icon}55`
+          : `1px solid ${color.icon}22`,
         animationDelay: `${globalIdx * 45}ms`,
       }}
     >
+      {/* Decorative glossy circle */}
       <div
-        className="absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-50 pointer-events-none"
-        style={{ background: dotColor }}
+        className="absolute -top-3 -right-3 w-14 h-14 rounded-full pointer-events-none"
+        style={{ background: "rgba(255,255,255,0.35)" }}
       />
+
+      {/* Icon square — solid accent color, white icon */}
       <div
-        className="flex items-center justify-center mb-3 rounded-[15px] text-[22px]"
-        style={{ width: 52, height: 52, background: iconBg, color: color.icon }}
+        className="relative flex items-center justify-center mb-3 rounded-[15px] text-[20px] shadow-sm"
+        style={{ width: 48, height: 48, background: color.icon, color: "#fff" }}
       >
         {item.icon}
       </div>
+
+      {/* Name */}
       <p
-        className="m-0 text-[12.5px] font-extrabold text-center leading-snug"
+        className="relative m-0 text-[12.5px] font-extrabold text-center leading-snug"
         style={{ color: "rgb(var(--text))" }}
       >
         {item.name}
       </p>
+
+      {/* Badge */}
       {hasChildren && (
         <div
-          className="mt-2 px-2.5 py-0.5 rounded-full flex items-center gap-1"
-          style={{ background: iconBg }}
+          className="relative mt-2 px-2.5 py-0.5 rounded-full flex items-center gap-1"
+          style={{ background: "rgba(255,255,255,0.55)" }}
         >
           <span className="text-[10px] font-bold" style={{ color: color.icon }}>
             {item.children.length} items

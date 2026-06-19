@@ -87,6 +87,7 @@ import MessagesPage from "./pages/messagesingal/MessagePage";
 import NewMessagePage from "./pages/messagesingal/NewMessagePage";
 import ChatPage from "./pages/messagesingal/ChatPage";
 import BulkStudentUpload from "./pages/BulkStudentUpload";
+import StudentDashboard from "./pages/StudentDashboard";
 
 // message files -
 
@@ -292,7 +293,7 @@ const App = () => {
         >
           <Route path="menu" element={<StudentMenu />} />
           {/* reuse or make StudentMenu */}
-          <Route path="dashboard" element={<ParentDashboard />} />
+          <Route path="dashboard" element={<StudentDashboard />} />
           {/* reuse or make StudentDashboard */}
           <Route path="notification" element={<NotificationPage />} />
           <Route path="attendance" element={<AttendanceParent />} />
