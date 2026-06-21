@@ -370,7 +370,7 @@ import {uploadToCloudinary} from "../utils/uploadToCloudinary.js"
 // Without it MongoDB checks each condition independently across the array,
 // causing false positives (e.g. one target has schoolId, another has type:'all').
 const buildTargetQuery = async (user) => {
-  const { role, school_id, teacher_id, student_id } = user;
+  const { role, school_id, teacher_id, student_id ,staff_id } = user;
 
   if (role === 'super_admin') return {}; // sees everything
 
@@ -402,19 +402,46 @@ const buildTargetQuery = async (user) => {
       },
     };
   }
+   if (role === 'staff_admin') {
+    return {
+      targets: {
+        $elemMatch: {
+          schoolId: school_id,
+          $or: [
+            { type: 'all' },
+            { roles: 'staff_admin' },
+            { staffId: staff_id },
+          ],
+        },
+      },
+    };
+  }
 
-  if (role === 'student_admin') {
+ if (role === 'student_admin') {
     const orConditions = [
       { type: 'all' },
       { roles: 'student_admin' },
       { studentId: student_id },
     ];
 
-    // Add classId condition if student has a class
+    // Add class/section condition if student has a class assigned
     if (student_id) {
-      const student = await Student.findById(student_id).select('classId');
+      const student = await Student.findById(student_id).select('classId sectionId');
       if (student?.classId) {
-        orConditions.push({ classId: student.classId });
+        orConditions.push(
+          { classId: student.classId }, // kept for backward-compat with older notifications saved with the single classId shape
+          {
+            classes: {
+              $elemMatch: {
+                classId: student.classId,
+                $or: [
+                  { sectionId: null },               // notification targeted the whole class, no specific section
+                  { sectionId: student.sectionId },  // notification targeted this student's exact section
+                ],
+              },
+            },
+          }
+        );
       }
     }
 
@@ -454,7 +481,7 @@ export const createNotificationHelper = async ({
     startingDate, endingDate,
     status,
     scheduledAt,
-    schoolId:req.user.school_id,
+    schoolId,
   });
 
   await notification.save();
@@ -470,13 +497,16 @@ export const createNotification = async (req, res) => {
       scheduledAt,
       status: requestedStatus,   // ← read it from body
     } = req.body;
-
+console.log(req.user)
     const schoolId  = req.user.school_id;
     const rawTargets = Array.isArray(target) ? target : [JSON.parse(target) || { type: 'all' }];
     const targets    = rawTargets.map((t) => ({
       ...t,
       ...(schoolId ? { schoolId } : {}),
     }));
+    if (targets.some(t => t.type === 'class' && (!Array.isArray(t.classes) || t.classes.length === 0))) {
+  return res.status(400).json({ error: 'Please select at least one class/section' });
+}
 
     const attachments = [];
     if (req.files && req.files.length > 0) {
@@ -516,10 +546,11 @@ const uploaded = await uploadToCloudinary(
       startingDate,
       endingDate,
       attachments,
-      createdBy: req.user._id,
+      createdBy: req.user.id||req.user._id,
       targets,
       status,
       scheduledAt: scheduleDate,
+    
     });
 
     await notification.save();
@@ -634,5 +665,146 @@ export const dismissAllNotifications = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to dismiss notifications" });
+  }
+};
+
+const EDIT_WINDOW_MINUTES = 10;
+
+const getEditability = (notification) => {
+  const now = new Date();
+  if (notification.status === 'scheduled' && notification.scheduledAt && notification.scheduledAt > now) {
+    return { allowed: true }; // hasn't gone out yet — editable anytime before it sends
+  }
+  const minutesSinceSent = (now - notification.createdAt) / 60000;
+  if (minutesSinceSent <= EDIT_WINDOW_MINUTES) {
+    return { allowed: true };
+  }
+  return {
+    allowed: false,
+    reason: `Notifications can only be edited within ${EDIT_WINDOW_MINUTES} minutes of being sent.`,
+  };
+};
+
+// ─── UPDATE: edit a notification within the grace window ─────────────────────
+export const updateNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notification = await Notification.findById(id);
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    const requesterId = req.user._id || req.user.id;
+    if (!requesterId || notification.createdBy?.toString() !== requesterId.toString()) {
+      return res.status(403).json({ error: 'You can only edit notifications you created' });
+    }
+
+    const { allowed, reason } = getEditability(notification);
+    if (!allowed) return res.status(403).json({ error: reason });
+
+    const {
+      title, message, notificationType,
+      target, startingDate, endingDate, scheduledAt,
+      keepAttachments,
+    } = req.body;
+
+    const schoolId = req.user.school_id;
+
+    if (target) {
+      const rawTargets = Array.isArray(target) ? target : [JSON.parse(target) || { type: 'all' }];
+      const newTargets  = rawTargets.map((t) => ({ ...t, ...(schoolId ? { schoolId } : {}) }));
+
+      if (newTargets.some(t => t.type === 'class' && (!Array.isArray(t.classes) || t.classes.length === 0))) {
+        return res.status(400).json({ error: 'Please select at least one class/section' });
+      }
+      notification.targets = newTargets;
+    }
+
+    const keepIds = keepAttachments
+      ? JSON.parse(keepAttachments)
+      : notification.attachments.map(a => a.public_id);
+
+    const removed = notification.attachments.filter(a => !keepIds.includes(a.public_id));
+    for (const att of removed) {
+      try {
+        await cloudinary.uploader.destroy(att.public_id, {
+          resource_type: att.type === 'application/pdf' ? 'image' : 'auto',
+        });
+      } catch (e) {
+        console.error('Cloudinary delete failed:', att.public_id, e);
+      }
+    }
+    notification.attachments = notification.attachments.filter(a => keepIds.includes(a.public_id));
+
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const isPdf    = file.mimetype === 'application/pdf';
+        const uploaded = await uploadToCloudinary(file, 'notifications/pdfs', isPdf ? 'image' : 'auto');
+        notification.attachments.push({
+          url: uploaded.url, public_id: uploaded.public_id,
+          name: file.originalname, type: file.mimetype,
+        });
+      }
+    }
+
+    if (title !== undefined)            notification.title = title;
+    if (message !== undefined)          notification.message = message;
+    if (notificationType !== undefined) notification.notificationType = notificationType;
+    if (startingDate !== undefined)     notification.startingDate = startingDate;
+    if (endingDate !== undefined)       notification.endingDate = endingDate;
+
+    if (scheduledAt !== undefined) {
+      if (scheduledAt) {
+        const parsed = new Date(scheduledAt);
+        notification.scheduledAt = parsed;
+        notification.status      = parsed > new Date() ? 'scheduled' : 'sent';
+      } else {
+        notification.scheduledAt = null;
+        notification.status      = 'sent';
+      }
+    }
+
+    await notification.save();
+    res.status(200).json({ message: 'Notification updated', notification });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update notification' });
+  }
+};
+
+// ─── DELETE: permanently remove a notification within the grace window ───────
+export const deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notification = await Notification.findById(id);
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    const requesterId = req.user._id || req.user.id;
+    if (!requesterId || notification.createdBy?.toString() !== requesterId.toString()) {
+      return res.status(403).json({ error: 'You can only delete notifications you created' });
+    }
+
+    const { allowed, reason } = getEditability(notification);
+    if (!allowed) return res.status(403).json({ error: reason });
+
+    for (const att of notification.attachments) {
+      try {
+        await cloudinary.uploader.destroy(att.public_id, {
+          resource_type: att.type === 'application/pdf' ? 'image' : 'auto',
+        });
+      } catch (e) {
+        console.error('Cloudinary delete failed:', att.public_id, e);
+      }
+    }
+
+    await Notification.findByIdAndDelete(id);
+    res.status(200).json({ message: 'Notification deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete notification' });
   }
 };

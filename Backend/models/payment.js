@@ -12,6 +12,9 @@ const paymentSchema = new mongoose.Schema({
         ref: 'School',
         required: true
     }
+}, {
+    // This tells Mongoose to auto-build indexes properly when the app boots up
+    autoIndex: true 
 });
 
 // 2. Add this COMPOUND index at the bottom

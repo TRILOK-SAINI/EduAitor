@@ -9,6 +9,8 @@ import {
   markAsRead,
   markAllAsRead,
   dismissAllNotifications,
+  updateNotification,  
+  deleteNotification,   
 } from "../controllers/notificationController.js";
 import upload from "../middlewares/upload.js"
 
@@ -20,6 +22,9 @@ router.get("/", authMiddleware, getAllNotifications);
 
 // ── Create (school admin) ─────────────────────────────────────────────────────
 router.post("/", authMiddleware,  upload.array('pdfs', 5),createNotification);
+// ── Edit / Delete (within the grace window) ───────────────────────────────────
+router.put("/:id",    authMiddleware, upload.array('pdfs', 5), updateNotification);
+router.delete("/:id", authMiddleware, deleteNotification);
 
 // ── Read actions ─────────────────────────────────────────────────────────────
 router.patch("/read-all", authMiddleware, markAllAsRead);
